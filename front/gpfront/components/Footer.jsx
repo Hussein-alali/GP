@@ -1,12 +1,12 @@
 import React from 'react';
 import { 
-  Facebook, 
-  Linkedin, 
-  Twitter, 
-  Snapchat, 
-  Tiktok, 
-  Instagram, 
-  Youtube 
+  FaFacebookF, 
+  FaLinkedinIn, 
+  FaTwitter, 
+  FaSnapchatGhost, 
+  FaTiktok, 
+  FaInstagram, 
+  FaYoutube 
 } from 'react-icons/fa'; // Install react-icons for these
 
 const Footer = () => {
@@ -16,13 +16,13 @@ const Footer = () => {
         
         {/* Left Section: Social Icons */}
         <div style={styles.socialIcons}>
-          <a href="#" style={styles.icon} aria-label="Facebook"><Facebook /></a>
-          <a href="#" style={styles.icon} aria-label="LinkedIn"><Linkedin /></a>
-          <a href="#" style={styles.icon} aria-label="X"><Twitter /></a>
-          <a href="#" style={styles.icon} aria-label="Snapchat"><Snapchat /></a>
-          <a href="#" style={styles.icon} aria-label="TikTok"><Tiktok /></a>
-          <a href="#" style={styles.icon} aria-label="Instagram"><Instagram /></a>
-          <a href="#" style={styles.icon} aria-label="YouTube"><Youtube /></a>
+          <a href="https://www.facebook.com/?locale=ar_AR" style={styles.icon} aria-label="Facebook"><FaFacebookF /></a>
+          <a href="https://www.linkedin.com/login/ar" style={styles.icon} aria-label="LinkedIn"><FaLinkedinIn /></a>
+          <a href="https://x.com/?lang=ar" style={styles.icon} aria-label="X"><FaTwitter /></a>
+          <a href="https://www.snapchat.com/" style={styles.icon} aria-label="Snapchat"><FaSnapchatGhost /></a>
+          <a href="https://www.tiktok.com/login" style={styles.icon} aria-label="TikTok"><FaTiktok /></a>
+          <a href="https://www.instagram.com/" style={styles.icon} aria-label="Instagram"><FaInstagram /></a>
+          <a href="https://www.youtube.com/" style={styles.icon} aria-label="YouTube"><FaYoutube /></a>
         </div>
 
         {/* Center Section: Legal Links */}
@@ -34,7 +34,7 @@ const Footer = () => {
 
         {/* Right Section: Copyright */}
         <div style={styles.copyright}>
-          <span>جميع الحقوق محفوظة لمجموعة طلعت مصطفى – السعودية © 2026.</span>
+          <span>جميع الحقوق محفوظة لنا  © 2026.</span>
         </div>
 
       </div>

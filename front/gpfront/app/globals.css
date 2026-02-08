@@ -1,96 +1,405 @@
-/* HEADER */
-.header {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  color: white;
+:root {
+  --primary-blue: #004d7a;
+  --primary-dark: #003858;
+  --text-white: #ffffff;
 }
 
-.header-left,
-.header-center,
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.header-logo {
-  text-align: center;
-}
-
-.header-logo h2 {
-  font-size: 22px;
+* {
+  box-sizing: border-box;
+  padding: 0;
   margin: 0;
 }
 
-.header-logo span {
-  font-size: 14px;
-  opacity: 0.8;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  direction: rtl; /* Enforce Right-to-Left for Arabic */
+  background-color: #f5f5f5;
 }
 
-/* HERO */
-.hero {
-  height: 100vh;
-  background-size: cover;
-  background-position: center;
+/* --- Hero Section & Slider --- */
+.hero-container {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 80px;
+  width: 100%;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden;
+  direction: rtl; 
 }
 
-.hero-overlay {
+/* Image Styling */
+.slide-image {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to left, rgba(0,0,0,0.6), transparent);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures image covers screen without stretching */
+  z-index: -1;
+  transition: opacity 0.8s ease-in-out;
 }
 
+/* Dark Overlay */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+  z-index: 0;
+}
+
+/* --- Hero Content --- */
 .hero-content {
-  position: relative;
-  max-width: 500px;
-  color: white;
+  position: absolute;
+  bottom: 25%;
+  right: 10%;
+  color: var(--text-white);
+  max-width: 600px;
   text-align: right;
+  z-index: 10;
+  padding-left: 20px; /* Prevent text hitting left edge on small screens */
 }
 
-.hero-content h1 {
-  font-size: 48px;
+.category-tag {
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(5px);
+  padding: 5px 15px;
+  border-radius: 20px;
+  display: inline-block;
   margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
-.hero-content p {
-  line-height: 1.7;
-  margin-bottom: 25px;
+.hero-title {
+  font-size: 3.5rem; /* Large desktop font */
+  font-weight: 800;
+  margin-bottom: 15px;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  opacity: 0.9;
+  line-height: 1.6;
 }
 
 .hero-btn {
-  background: #0d3b66;
+  background-color: var(--primary-blue);
   color: white;
+  padding: 14px 40px;
   border: none;
-  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* ARROWS */
-.arrow {
+.hero-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* --- Navigation Arrows --- */
+.nav-arrow {
   position: absolute;
-  bottom: 40px;
+  bottom: 50px;
   background: transparent;
   border: none;
   color: white;
-  font-size: 40px;
   cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+  z-index: 20;
+  padding: 10px;
 }
 
-.arrow.left {
-  left: 40px;
+.nav-arrow:hover {
+  opacity: 1;
 }
 
-.arrow.right {
-  right: 40px;
+/* RTL: Prev is visually Right, Next is visually Left if logic follows DOM order, 
+   but usually arrows are placed explicitly. */
+.nav-right-arrow { right: 50px; } /* Next slide in RTL context usually moves left visually */
+.nav-left-arrow { left: 50px; }
+
+/* --- Scroll Indicator --- */
+.scroll-indicator {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(50%); /* Center in RTL */
+  border: 2px solid rgba(255,255,255,0.5);
+  width: 26px;
+  height: 40px;
+  border-radius: 15px;
+  z-index: 20;
+}
+
+.scroll-indicator::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  animation: scroll 2s infinite;
+}
+
+@keyframes scroll {
+  0% { top: 8px; opacity: 1; }
+  100% { top: 25px; opacity: 0; }
+}
+
+/* --- Transparent Navbar --- */
+.transparent-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px; /* Fixed height helps with centering */
+  display: flex;
+  justify-content: space-between; /* Keeps left/right items apart */
+  align-items: center;
+  padding: 0 40px;
+  z-index: 50;
+  background: transparent;
+}
+
+.logo-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 52; /* Ensure it stays above other elements */
+}
+.logo-img {
+  height: 60px; /* Adjust this height to match your logo's design */
+  width: auto;  /* Maintains aspect ratio */
+  object-fit: contain;
+}
+.nav-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 51; /* Keep buttons above logo if screen gets too small */
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.nav-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s;
+}
+
+.nav-item:hover .nav-icon-circle {
+  background: rgba(73, 73, 73, 0.795);
+}
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 1024px) {
+  .hero-title { font-size: 2.8rem; }
+  .transparent-nav { padding: 20px 30px; }
+}
+
+@media (max-width: 768px) {
+  /* Navbar Adjustments */
+  .transparent-nav { 
+    padding: 15px 20px; 
+  }
+  
+  /* Hide text labels on mobile, keep icons */
+  .nav-text-label {
+    display: none;
+  }
+  
+ .logo-text {
+  color: #ffffff; /* Gold color matching previous design */
+  font-family: serif;
+  text-transform: uppercase;
+}
+@media (max-width: 768px) {
+  .logo-img {
+    height: 40px; /* Smaller logo on mobile screens */
+  }
+}
+  /* Hero Content Adjustments */
+  .hero-content {
+    right: 5%;
+    bottom: 20%;
+    max-width: 90%;
+    text-align: center; /* Center text on mobile */
+    right: 0;
+    left: 0;
+    margin: auto;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+    display: none; /* Optional: Hide subtitle on very small screens to save space */
+  }
+
+  /* Arrows */
+  .nav-right-arrow { right: 10px; }
+  .nav-left-arrow { left: 10px; }
+  
+  .hero-btn {
+    width: 100%; /* Full width button on mobile */
+    max-width: 300px;
+  }
+}
+
+
+
+
+
+/* --- About Section Styles --- */
+.about-section {
+  padding: 100px 0;
+  background-color: #fff;
+  direction: rtl; /* Ensure correct text direction */
+}
+
+.about-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center; /* Vertically center content */
+  gap: 80px; /* Space between image and text */
+  padding: 0 50px;
+}
+
+/* Logo Column */
+.about-logo-col {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 1050px; 
+}
+
+.about-logo {
+  max-width: 100%;
+  height: auto;
+  /* You might need to adjust this depending on your actual logo file size */
+  max-height: 1050px; 
+  object-fit: contain;
+}
+
+/* Content Column */
+.about-content-col {
+  flex: 1.2; /* Give text a bit more space than the image */
+  text-align: right;
+}
+
+.about-heading {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #222;
+  margin-bottom: 30px;
+}
+
+.about-subheading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+  margin-top: 35px;
+  margin-bottom: 15px;
+}
+
+.about-text {
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: #666;
+  margin-bottom: 20px;
+  text-align: justify; /* Creates clean block text edges */
+}
+
+/* "Read More" Button */
+.about-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 35px;
+  border: 1px solid #004d7a; /* The dark blue theme color */
+  color: #004d7a;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  margin-top: 30px;
+}
+
+.about-btn:hover {
+  background-color: #004d7a;
+  color: #fff;
+}
+
+.about-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.about-btn:hover svg {
+  transform: translateX(-5px); /* Move arrow left on hover */
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 992px) {
+  .about-section {
+    padding: 70px 0;
+  }
+
+  .about-container {
+    flex-direction: column; /* Stack vertically on smaller screens */
+    gap: 50px;
+    padding: 0 30px;
+  }
+  
+  .about-logo-col, .about-content-col {
+    flex: auto;
+    width: 100%;
+    text-align: center; /* Center text on mobile */
+  }
+
+  .about-text {
+    text-align: center;
+  }
+
+  .about-logo {
+    max-height: 250px;
+  }
+
+  .about-heading {
+    font-size: 2rem;
+  }
+
+  .about-btn {
+    width: 100%; /* Full-width button on mobile */
+    justify-content: center;
+  }
 }

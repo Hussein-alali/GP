@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { 
   FaFacebookF, 
@@ -8,8 +9,15 @@ import {
   FaInstagram, 
   FaYoutube 
 } from 'react-icons/fa'; // Install react-icons for these
-
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 const Footer = () => {
+  const pathname = usePathname(); // 3. Get current path
+
+  // 4. Hide Footer on Login and Register pages
+  if (pathname === '/login' || pathname === '/register' || pathname === '/contact') {
+    return null;
+  }
   return (
     <footer style={styles.footerContainer}>
       <div style={styles.contentWrapper}>

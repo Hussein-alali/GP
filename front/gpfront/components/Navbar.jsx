@@ -27,12 +27,12 @@ const Navbar = () => {
       </div>
 
       {/* Center (Logo) */}
-      <Link href="/" className="logo-container" style={{ textDecoration: 'none', cursor: 'pointer' }}>
+      <Link href="/" className="logo-container" style={{ textDecoration: 'none', cursor: 'pointer',width:'100px', height:'100px' }}>
         <div className="logo-wrapper">
             <img 
-          src="/RSLOGO.jpg" 
+          src="/RSLOGO2.png" 
           alt="Smart Estate Logo" 
-          className="logo-img" 
+          className="logo-img" style={{ width: '130%', height: '100%', objectFit: 'contain' }}
         />
         </div>
       </Link>

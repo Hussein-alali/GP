@@ -85,7 +85,7 @@ const AboutSection = () => {
         {/* Logo Column */}
         <div className="about-logo-col">
           <img 
-            src="/RSLOGO.jpg" 
+            src="/RSLOGO2.png" 
             alt="مجموعة طلعت مصطفى - TMG" 
             className="about-logo" 
           />

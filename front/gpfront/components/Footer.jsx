@@ -169,5 +169,54 @@ const Footer = () => {
     </footer>
   );
 };
+// Simple Styles
+const styles = {
+  footerContainer: {
+    backgroundColor: '#f5f5f5', // Light grey background from your image
+    padding: '20px 40px',
+    borderTop: '1px solid #e0e0e0',
+    fontFamily: 'Arial, sans-serif',
+    direction: 'rtl', // Right-to-Left for Arabic content
+  },
+  contentWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    flexWrap: 'wrap',
+    gap: '20px'
+  },
+  socialIcons: {
+    display: 'flex',
+    gap: '15px',
+    fontSize: '18px',
+    color: '#003366', // Deep blue/navy from the icons
+    order: 1,
+  },
+  legalLinks: {
+    display: 'flex',
+    gap: '8px',
+    fontSize: '14px',
+    color: '#666',
+    order: 2,
+  },
+  copyright: {
+    fontSize: '14px',
+    color: '#666',
+    order: 3,
+  },
+  link: {
+    textDecoration: 'none',
+    color: 'inherit',
+  },
+  icon: {
+    color: 'inherit',
+    textDecoration: 'none',
+  },
+  divider: {
+    margin: '0 5px'
+  }
+};
 
 export default Footer;

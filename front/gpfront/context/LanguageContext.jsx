@@ -41,14 +41,14 @@ const translations = {
     about: {
       title: "العقارات الذكية",
       text1:"هو مشروع تقني متخصص يهدف إلى تقديم حل رقمي متكامل في مجال عرض وإدارة الوحدات العقارية، من خلال منصة إلكترونية حديثة تجمع بين سهولة الاستخدام ودقة عرض البيانات. يرتكز المشروع على توظيف أحدث تقنيات تطوير الويب لتوفير تجربة استخدام سلسة تساعد المستخدمين على استكشاف الوحدات العقارية ومتابعة أسعارها ومواصفاتها بكل وضوح وشفافية",
-      subtitle: "مجموعة طلعت مصطفى السعودية",
-      text2: "وفي خطوة ثابتة لدخول السوق السعودي بنجاح، تم توقيع اتفاقية شراكة استراتيجية لتطوير مشاريع مدن ذكية ومستدامة في المملكة.",
+      subtitle: "التكامل والقيمة المضافة",
+      text2: "يعمل الموقع على تسهيل عملية البحث والمقارنة بين الوحدات المختلفة من خلال عرض منظم للبيانات والأسعار، مما يعزز من كفاءة اتخاذ القرار لدى المستخدمين. ويأتي المشروع كخطوة متقدمة نحو رقمنة قطاع العرض العقاري، مع التركيز على تقديم قيمة حقيقية من خلال حلول ذكية قابلة للتطوير والنمو مستقبل",
       btn: "قراءة المزيد"
     },
-    footer: {
-      rights: "جميع الحقوق محفوظة لمجموعة طلعت مصطفى السعودية © 2026.",
+  footer: {
+      rights: "جميع الحقوق محفوظة لنا © 2026.",
       privacy: "سياسة الخصوصية",
-      terms: "الشروط والأحكام"
+      terms: "الشروط و الأحكام"
     }
   },
   en: {
@@ -84,14 +84,14 @@ const translations = {
       ]
     },
     about: {
-      title: "Talaat Moustafa Group",
-      text1: "Talaat Moustafa Group is the leading Egyptian real estate developer with over 50 years of experience, changing the map of urban development.",
-      subtitle: "TMG Saudi Arabia",
-      text2: "In a solid step towards successfully entering the Saudi market, a strategic partnership agreement was signed to develop smart sustainable cities.",
+      title: "SMART ESTATE",
+      text1: "It is a specialized technology project that aims to provide a comprehensive digital solution for displaying and managing real estate units, through a modern electronic platform that combines ease of use with accurate data presentation. The project relies on employing the latest web development technologies to provide a seamless user experience that helps users explore real estate units and track their prices and specifications with complete clarity and transparency.",
+      subtitle: "Integration and added value",
+      text2: "The website facilitates the search and comparison of different properties by presenting data and prices in an organized manner, thus enhancing user decision-making efficiency. This project represents a significant step towards digitizing the real estate sector, focusing on delivering genuine value through smart, scalable, and future-proof solutions.",
       btn: "Read More"
     },
-    footer: {
-      rights: "All rights reserved to TMG Saudi Arabia © 2026.",
+ footer: {
+      rights: "All rights reserved © 2026.",
       privacy: "Privacy Policy",
       terms: "Terms & Conditions"
     }

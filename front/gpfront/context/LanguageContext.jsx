@@ -49,6 +49,15 @@ const translations = {
       rights: "جميع الحقوق محفوظة لنا © 2026.",
       privacy: "سياسة الخصوصية",
       terms: "الشروط و الأحكام"
+    },
+    menuItems: {
+      close: "اغلاق",
+      home: "الرئيسية",
+      about: "معلومات عنا",
+      projects: "مشاريعنا",
+      contact: "اتصل بنا",
+      language: "English",
+      unifiedNumber: ""
     }
   },
   en: {
@@ -94,6 +103,15 @@ const translations = {
       rights: "All rights reserved © 2026.",
       privacy: "Privacy Policy",
       terms: "Terms & Conditions"
+    },
+    menuItems: {
+      close: "Close",
+      home: "Home",
+      about: "About Us",
+      projects: "Our Projects",
+      contact: "Contact Us",
+      language: "العربية",
+      unifiedNumber: ""
     }
   }
 };

@@ -1,3 +1,5 @@
+/* app/globals.css */
+
 :root {
   --primary-blue: #004d7a;
   --primary-dark: #003858;
@@ -119,9 +121,8 @@ body {
   opacity: 1;
 }
 
-/* RTL: Prev is visually Right, Next is visually Left if logic follows DOM order, 
-   but usually arrows are placed explicitly. */
-.nav-right-arrow { right: 50px; } /* Next slide in RTL context usually moves left visually */
+/* RTL: Prev is visually Right, Next is visually Left if logic follows DOM order */
+.nav-right-arrow { right: 50px; } 
 .nav-left-arrow { left: 50px; }
 
 /* --- Scroll Indicator --- */
@@ -180,11 +181,23 @@ body {
   align-items: center;
   z-index: 52; /* Ensure it stays above other elements */
 }
-.logo-img {
-  height: 60px; /* Adjust this height to match your logo's design */
-  width: auto;  /* Maintains aspect ratio */
-  object-fit: contain;
+
+/* Logo Wrapper Size */
+.logo-wrapper {
+  width: 100px;  /* Increase this value to enlarge */
+  height: 100px; /* Increase this value to enlarge */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+/* Image Size */
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures the logo doesn't get distorted */
+}
+
 .nav-section {
   display: flex;
   align-items: center;
@@ -235,15 +248,15 @@ body {
   }
   
  .logo-text {
-  color: #ffffff; /* Gold color matching previous design */
+  color: #ffffff;
   font-family: serif;
   text-transform: uppercase;
 }
-@media (max-width: 768px) {
+
   .logo-img {
     height: 40px; /* Smaller logo on mobile screens */
   }
-}
+
   /* Hero Content Adjustments */
   .hero-content {
     right: 5%;
@@ -274,10 +287,6 @@ body {
   }
 }
 
-
-
-
-
 /* --- About Section Styles --- */
 .about-section {
   padding: 100px 0;
@@ -306,7 +315,6 @@ body {
 .about-logo {
   max-width: 100%;
   height: auto;
-  /* You might need to adjust this depending on your actual logo file size */
   max-height: 1050px; 
   object-fit: contain;
 }
@@ -403,7 +411,7 @@ body {
     justify-content: center;
   }
 }
-/* --- Login Page Styles --- */
+
 /* --- Login & Register Page Styles --- */
 
 /* Updated Container: Added padding so the card doesn't touch screen edges */
@@ -439,8 +447,6 @@ body {
   display: flex;       /* Ensures image container fills height */
   flex-direction: column;
 }
-
-/* ... keep the rest of your CSS the same ... */
 
 .login-bg-image {
   width: 100%;
@@ -684,65 +690,45 @@ body {
   margin-left: 5px;
 }
 
-/* Mobile Responsive */
-@media (max-width: 900px) {
-  .login-card {
-    flex-direction: column;
-    height: auto;
-    width: 95%;
-  }
-  
-  .login-image-side {
-    height: 250px;
-    flex: none;
-  }
-  
-  .login-form-side {
-    padding: 30px;
-  }
-  
-  .top-login-pill {
-    display: none;
-  }
-}
 /* --- Contact Page Styles --- */
 .contact-card {
-  width: 700px;
-  max-width: 95%;
+  width: 500px;
+  max-width: 90%;
   background-color: #fff;
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-  padding: 50px;
+  padding: 35px;
   text-align: center;
   position: relative;
-  min-height: 500px;
+  height: auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  margin: auto;
 }
 
 /* The SE Logo Badge */
 .se-logo-box {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   background-color: #004d7a; /* Smart Estate Dark Blue */
   color: white;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 800;
-  font-size: 24px;
+  font-size: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 12px;
-  margin: 0 auto 20px auto;
+  margin: 0 auto 15px auto;
   box-shadow: 0 4px 10px rgba(0,77,122,0.3);
 }
 
 .contact-title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: #333;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .contact-subtitle {
@@ -767,10 +753,10 @@ body {
 /* Textarea styling */
 .form-textarea {
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 14px;
   outline: none;
   resize: none;
   height: 120px;
@@ -841,4 +827,218 @@ body {
   background-color: #004d7a;
   color: white;
   border-color: #004d7a;
+}
+
+/* --- Expandable CTA Button Animation (Universal Fix) --- */
+
+/* The Button Container */
+.nav-cta-btn {
+  display: flex;
+  align-items: center;
+  background-color: transparent; 
+  border-radius: 50px;           
+  padding: 4px;                  
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+  text-decoration: none;
+  overflow: hidden;    
+  width: max-content; /* Ensure it wraps tightly */
+  gap: 0;
+}
+
+/* The Icon Circle */
+.nav-cta-btn .nav-icon-circle {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  z-index: 2; 
+}
+
+/* The Text Label */
+.nav-cta-btn .nav-text-label {
+  max-width: 0;                  
+  opacity: 0;
+  white-space: nowrap;           
+  font-size: 14px;
+  font-weight: 600;
+  color: white;                  
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  
+  /* Logical Property: Sets margin on the "start" side (Left in EN, Right in AR) */
+  margin-inline-start: 0; 
+}
+
+/* --- HOVER STATE --- */
+
+/* 1. Expand Container & Change Background */
+.nav-cta-btn:hover {
+  background-color: #003858;
+  
+  /* Logical Padding: Adds space at the END for the text (Right in EN, Left in AR) */
+  padding-inline-end: 20px; 
+  padding-inline-start: 4px; /* Keep icon side tight */
+}
+
+/* 2. Reveal Text */
+.nav-cta-btn:hover .nav-text-label {
+  max-width: 150px;    
+  opacity: 1;
+  
+  /* Logical Margin: Adds space between Icon and Text automatically */
+  margin-inline-start: 10px; 
+}
+
+/* 3. Icon Animation */
+.nav-cta-btn:hover .nav-icon-circle {
+  transform: rotate(-10deg) scale(0.9);
+  background-color: transparent; 
+}
+
+
+
+/* --- Side Menu Styles --- */
+
+/* 1. Dark Overlay */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+  z-index: 99; /* Behind menu, above everything else */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.menu-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* 2. Sliding Panel */
+.side-menu-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px; /* Width of the menu */
+  max-width: 85%;
+  height: 100vh;
+  background-color: #003858; /* Deep Blue Theme */
+  z-index: 100;
+  color: white;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: -5px 0 30px rgba(0,0,0,0.3);
+}
+
+/* RTL Animation (Arabic default) */
+html[dir="rtl"] .side-menu-panel {
+  right: 0;
+  transform: translateX(100%); /* Hidden to the right */
+}
+html[dir="rtl"] .side-menu-panel.open {
+  transform: translateX(0);
+}
+
+/* 3. Header (Close Button) */
+.side-menu-header {
+  display: flex;
+  margin-bottom: 60px;
+  /* RTL (Arabic): End = Left side */
+  justify-content: flex-start; 
+}
+
+
+.close-btn-wrapper {
+  background: transparent;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.close-icon-circle {
+  width: 35px;
+  height: 35px;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.close-btn-wrapper:hover .close-icon-circle {
+  background-color: white;
+  color: #003858;
+}
+
+/* 4. Links List */
+.side-menu-links {
+  display: flex;
+  flex-direction: column;
+  gap: 30px; /* Space between links */
+  flex: 1; /* Pushes footer to bottom */
+}
+
+.side-link {
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  transition: transform 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+.side-link:hover {
+  color: #a7d8ff; /* Light blue on hover */
+  transform: translateX(-10px); /* Small nudge on hover */
+}
+html[dir="ltr"] .side-link:hover {
+  transform: translateX(10px);
+}
+
+/* 5. Footer (Phone) */
+.side-menu-footer {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 30px;
+}
+
+.footer-phone {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Align right in RTL */
+  gap: 15px;
+}
+
+html[dir="ltr"] .footer-phone {
+  justify-content: flex-start; /* Align left in LTR */
+}
+
+.phone-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c9a35b; /* Gold color for number like screenshot */
+}
+
+.phone-label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.footer-icon-box {
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c9a35b;
 }

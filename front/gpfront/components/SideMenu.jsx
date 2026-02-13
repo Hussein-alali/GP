@@ -51,8 +51,8 @@ const SideMenu = ({ isOpen, onClose }) => {
 
         {/* Center: Navigation Links */}
         <div className="side-menu-links">
-          <Link href="/page" className="side-link" onClick={onClose}>{t.menuItems.home}</Link>
-          <Link href="/contact" className="side-link" onClick={onClose}>{t.menuItems.about}</Link>
+          <Link href="/" className="side-link" onClick={onClose}>{t.menuItems.home}</Link>
+          <Link href="/about" className="side-link" onClick={onClose}>{t.menuItems.about}</Link>
           <Link href="/contact" className="side-link" onClick={onClose}>{t.menuItems.projects}</Link>
           <Link href="/contact" className="side-link" onClick={onClose}>{t.menuItems.contact}</Link>
           

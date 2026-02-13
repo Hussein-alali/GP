@@ -931,8 +931,25 @@ body {
   flex-direction: column;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   box-shadow: -5px 0 30px rgba(0,0,0,0.3);
+  /* Hidden State: Moved to the Right */
+  transform: translateX(100%);
+}
+.side-menu-panel.open {
+  transform: translateX(0);
 }
 
+/* Force LTR logic globally for the menu panel */
+html[dir="ltr"] .side-menu-panel,
+html[dir="rtl"] .side-menu-panel {
+  right: 0;
+  left: auto;
+  transform: translateX(100%);
+}
+
+html[dir="ltr"] .side-menu-panel.open,
+html[dir="rtl"] .side-menu-panel.open {
+  transform: translateX(0);
+}
 /* RTL Animation (Arabic default) */
 html[dir="rtl"] .side-menu-panel {
   right: 0;
@@ -1041,4 +1058,116 @@ html[dir="ltr"] .footer-phone {
   align-items: center;
   justify-content: center;
   color: #c9a35b;
+}
+/* Search Box Styles */
+.search-box-wrapper {
+  position: relative; /* Change from absolute to relative */
+  margin: -50px auto 50px; /* Pull it up slightly to overlap the section above if desired */
+  width: 90%;
+  max-width: 1000px;
+  z-index: 10;
+}
+
+.search-container {
+  background: #ffffff; /* Use a solid color since it's no longer on an image */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 25px;
+  border-radius: 15px;
+  border: 1px solid #eee;
+}
+
+/* Ensure text and icons are visible on white background */
+.search-container .property-count {
+  color: #333;
+}
+
+.search-container .filter-select {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.search-container .location-input {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.search-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.type-toggle {
+  background: white;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+}
+
+.toggle-btn {
+  border: none;
+  background: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #666;
+}
+
+.toggle-btn.active {
+  background: #e1f0f7;
+  color: #004d7a;
+}
+
+.main-input-wrapper {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.location-input {
+  width: 100%;
+  padding: 15px 50px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1.1rem;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr;
+  gap: 10px;
+}
+
+.filter-select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+}
+
+.search-submit-btn {
+  background: #008ccf;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+/* RTL Adjustment */
+html[dir="rtl"] .input-icon {
+  right: auto;
+  left: 15px;
 }

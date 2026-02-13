@@ -1059,6 +1059,9 @@ html[dir="ltr"] .footer-phone {
   justify-content: center;
   color: #c9a35b;
 }
+
+
+
 /* Search Box Styles */
 .search-box-wrapper {
   position: relative; /* Change from absolute to relative */
@@ -1170,4 +1173,114 @@ html[dir="ltr"] .footer-phone {
 html[dir="rtl"] .input-icon {
   right: auto;
   left: 15px;
+}
+
+/* Slider Popup Styles */
+.slider-display {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #003858;
+  margin-bottom: 15px;
+}
+
+/* The horizontal bar */
+.visual-slider {
+  width: 100%;
+  height: 6px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+  margin-bottom: 20px;
+  -webkit-appearance: none;
+}
+
+/* The draggable thumb (The circle you pull) */
+.visual-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #008ccf;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.visual-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #008ccf;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Standard Popup and Item styling */
+.custom-filter-item { position: relative; width: 100%; }
+.filter-text-box {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #fdfdfd; border: 1px solid #ced4da; padding: 12px 16px;
+  border-radius: 8px; cursor: pointer; transition: 0.2s;
+}
+.simple-range-popup {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  background: white; border-radius: 10px; padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 50;
+}
+.apply-btn {
+  width: 100%; padding: 10px; background: #008ccf; color: white;
+  border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+
+/* Modern Dropdown List */
+.modern-dropdown-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 60;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dropdown-option {
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #444;
+  transition: all 0.2s ease;
+}
+
+.dropdown-option:hover {
+  background-color: #f0f7ff;
+  color: #008ccf;
+}
+
+.dropdown-option.selected {
+  background-color: #eef8ff;
+  color: #008ccf;
+  font-weight: 600;
+}
+
+/* Ensure icons align based on language */
+html[dir="rtl"] .dropdown-option svg {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+html[dir="ltr"] .dropdown-option svg {
+  margin-left: auto;
+  margin-right: 0;
 }

@@ -7,6 +7,7 @@ export default function Home() {
   return (
     <main>
       <Hero />
+      <br></br>
       <SearchBox />
       
       {/* Other sections like PropertiesList go here */}

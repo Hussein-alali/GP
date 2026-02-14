@@ -69,9 +69,9 @@ const Navbar = () => {
 
         {/* --- CENTER: LOGO --- */}
         <Link href="/" className="logo-container" style={{ textDecoration: 'none', cursor: 'pointer' }}>
-            <div className="logo-wrapper">
-               <img src="/RSLOGO2.png" alt="Logo" className="logo-img" />
-            </div>
+        <div className="logo-wrapper">
+        <img src="/RSLOGO2.png" alt="Logo" className="logo-img" />
+        </div>
         </Link>
 
         {/* --- RIGHT SIDE: MENU BUTTON (Always Right) --- */}

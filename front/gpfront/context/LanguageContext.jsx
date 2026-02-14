@@ -53,12 +53,27 @@ const translations = {
     menuItems: {
       close: "اغلاق",
       home: "الرئيسية",
-      about: "معلومات عنا",
+      about: "نبذة عنا",
       projects: "مشاريعنا",
       contact: "اتصل بنا",
       language: "English",
       unifiedNumber: ""
-    }
+    },
+    aboutPage: {
+      mainTitle: "معلومات عنا",
+      subTitle: "تعرف على رؤيتنا ومهمتنا في عالم العقارات الذكية",
+      visionTitle: "رؤيتنا",
+      visionText: "نسعى لأن نكون المنصة الرائدة في مجال العقارات الرقمية، من خلال تقديم تجربة مستخدم سلسة وموثوقة تعتمد على أحدث تقنيات الذكاء الاصطناعي وتحليل البيانات.",
+      missionTitle: "مهمتنا",
+      missionText: "هدفنا هو ربط البائعين والمشترين في بيئة آمنة وشفافة، وتوفير أدوات ذكية تساعد المستخدمين على اتخاذ قرارات استثمارية صائبة بناءً على بيانات دقيقة ومحدثة.",
+      whyUsTitle: "لماذا تختارنا؟",
+      whyUsList: [
+        "✅ واجهة مستخدم سهلة وتفاعلية.",
+        "✅ تحليل دقيق لأسعار السوق.",
+        "✅ دعم فني متكامل على مدار الساعة.",
+        "✅ خيارات بحث متقدمة تناسب جميع الاحتياجات."
+      ]
+    },
   },
   en: {
     nav: {
@@ -112,7 +127,22 @@ const translations = {
       contact: "Contact Us",
       language: "العربية",
       unifiedNumber: ""
-    }
+    },
+    aboutPage: {
+      mainTitle: "About Us",
+      subTitle: "Learn about our vision and mission in the world of smart real estate",
+      visionTitle: "Our Vision",
+      visionText: "We strive to be the leading platform in digital real estate by providing a seamless and reliable user experience based on the latest AI technologies and data analysis.",
+      missionTitle: "Our Mission",
+      missionText: "Our goal is to connect sellers and buyers in a safe and transparent environment, providing smart tools to help users make sound investment decisions based on accurate data.",
+      whyUsTitle: "Why Choose Us?",
+      whyUsList: [
+        "✅ Easy and interactive user interface.",
+        "✅ Accurate market price analysis.",
+        "✅ 24/7 integrated technical support.",
+        "✅ Advanced search options to suit all needs."
+      ]
+    },
   }
 };
 

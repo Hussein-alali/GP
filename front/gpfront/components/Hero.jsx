@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import { useLanguage } from '@/context/LanguageContext'; // Import Hook
+import Link from 'next/link'; 
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -75,12 +76,11 @@ const Hero = () => {
           <div className="overlay"></div>
           
           {/* Text Content */}
-          <div className={`hero-content ${index === currentSlide ? 'active' : ''}`}>
-            <span className="hero-tag">{slide.tag}</span>
-            <h1 className="hero-title">{slide.title}</h1>
-            <p className="hero-subtitle">{slide.subtitle}</p>
-            <button className="hero-btn">{slide.buttonText}</button>
-          </div>
+    <div className={`hero-content ${index === currentSlide ? 'active' : ''}`}>
+  <span className="hero-tag">{slide.tag}</span>
+  <h1 className="hero-title">{slide.title}</h1>
+  <p className="hero-subtitle">{slide.subtitle}</p>
+</div>
         </div>
       ))}
 

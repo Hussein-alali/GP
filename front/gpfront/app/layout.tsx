@@ -1,7 +1,7 @@
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import type { ReactNode } from "react";
-
+import ChatIcon from "@/components/ChatIcon";
 
 type Props = {
   children: ReactNode;
@@ -18,6 +18,7 @@ export default function RootLayout({ children }: Props) {
       <body>
         <LanguageProvider>
           {children}
+          <ChatIcon />
           <Footer />
         </LanguageProvider>
       </body>

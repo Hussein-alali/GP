@@ -1,33 +1,48 @@
-// components/SearchBox.jsx
 "use client";
 import React, { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useRouter } from 'next/navigation'; // Import for navigation
 
 const SearchBox = () => {
   const { language } = useLanguage();
+  const router = useRouter();
   const isRTL = language === 'ar';
+  
+  // State Management
   const [searchType, setSearchType] = useState('buy');
   const [activePopup, setActivePopup] = useState(null);
-const propertyTypes = [
-  { id: 'apartments', ar: 'شقق', en: 'Apartments' },
-  { id: 'furnished-apartments', ar: 'شقق مفروشة', en: 'Furnished Apartments' },
-  { id: 'villas', ar: 'فلل', en: 'Villas' },
-  { id: 'chalets', ar: 'شاليهات', en: 'Chalets' },
-];
-
-const [selectedType, setSelectedType] = useState(null);
-
-
-  // States for the slider values
+  const [location, setLocation] = useState("");
   const [price, setPrice] = useState(500000);
   const [area, setArea] = useState(150);
+  const [selectedType, setSelectedType] = useState(null);
+
+  const propertyTypes = [
+    { id: 'apartments', ar: 'شقق', en: 'Apartments' },
+    { id: 'furnished-apartments', ar: 'شقق مفروشة', en: 'Furnished Apartments' },
+    { id: 'villas', ar: 'فلل', en: 'Villas' },
+    { id: 'chalets', ar: 'شاليهات', en: 'Chalets' },
+  ];
 
   const togglePopup = (type) => setActivePopup(activePopup === type ? null : type);
+
+  // Search Submission Logic
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    
+    // Only add filters if they have a value selected
+    if (location) params.append('location', location);
+    if (selectedType) params.append('type', selectedType.id);
+    params.append('maxPrice', price);
+    params.append('maxArea', area);
+    params.append('searchType', searchType);
+
+    // Redirect to the properties page with the query string
+    router.push(`/properties?${params.toString()}`);
+  };
 
   return (
     <div className="search-box-wrapper" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="search-container">
-        {/* ... Top Row and Main Input stay the same ... */}
         <div className="search-top-row">
           <span className="property-count">
             {isRTL ? '433,740 عقار للبيع و للإيجار' : '433,740 Properties for Buy & Rent'}
@@ -43,11 +58,19 @@ const [selectedType, setSelectedType] = useState(null);
         </div>
 
         <div className="main-input-wrapper">
-          <input type="text" placeholder={isRTL ? 'المدينة، أو الحي أو إسم الشارع' : 'City, District, or Street Name'} className="location-input" />
+          <input 
+            type="text" 
+            placeholder={isRTL ? 'المدينة، أو الحي أو إسم الشارع' : 'City, District, or Street Name'} 
+            className="location-input"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
         </div>
 
         <div className="filters-row">
-          <button className="search-submit-btn">{isRTL ? 'بحث' : 'Search'}</button>
+          <button className="search-submit-btn" onClick={handleSearch}>
+            {isRTL ? 'بحث' : 'Search'}
+          </button>
 
           {/* AREA SLIDER FILTER */}
           <div className="custom-filter-item">
@@ -85,41 +108,33 @@ const [selectedType, setSelectedType] = useState(null);
             )}
           </div>
 
-<div className="custom-filter-item">
-  <div 
-    className={`filter-text-box ${activePopup === 'type' ? 'active' : ''}`} 
-    onClick={() => togglePopup('type')}
-  >
-    <span>
-      {selectedType 
-        ? (isRTL ? selectedType.ar : selectedType.en) 
-        : (isRTL ? 'نوع العقار' : 'Property Type')}
-    </span>
-    <span className={`arrow-icon ${activePopup === 'type' ? 'up' : 'down'}`}></span>
-  </div>
-
-  {activePopup === 'type' && (
-    <div className="modern-dropdown-list">
-      {propertyTypes.map((type) => (
-        <div 
-          key={type.id} 
-          className={`dropdown-option ${selectedType?.id === type.id ? 'selected' : ''}`}
-          onClick={() => {
-            setSelectedType(type);
-            setActivePopup(null);
-          }}
-        >
-          {isRTL ? type.ar : type.en}
-          {selectedType?.id === type.id && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#008ccf" strokeWidth="3">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          )}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+          {/* TYPE FILTER */}
+          <div className="custom-filter-item">
+            <div className={`filter-text-box ${activePopup === 'type' ? 'active' : ''}`} onClick={() => togglePopup('type')}>
+              <span>
+                {selectedType ? (isRTL ? selectedType.ar : selectedType.en) : (isRTL ? 'نوع العقار' : 'Property Type')}
+              </span>
+              <span className={`arrow-icon ${activePopup === 'type' ? 'up' : 'down'}`}></span>
+            </div>
+            {activePopup === 'type' && (
+              <div className="modern-dropdown-list">
+                {propertyTypes.map((type) => (
+                  <div 
+                    key={type.id} 
+                    className={`dropdown-option ${selectedType?.id === type.id ? 'selected' : ''}`}
+                    onClick={() => { setSelectedType(type); setActivePopup(null); }}
+                  >
+                    {isRTL ? type.ar : type.en}
+                    {selectedType?.id === type.id && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#008ccf" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

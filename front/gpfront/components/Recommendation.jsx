@@ -42,7 +42,7 @@ const CompoundCarousel = () => {
       <div className="section-header">
         <h2 className="section-title">{isRTL ? 'دليل الشراء' : 'Buying Guide'}</h2>
         {/* Main "Show More" Button - Redirects to main list */}
-        <Link href="/compounds" className="modern-show-more">
+        <Link href="/properties" className="modern-show-more">
           <span>{isRTL ? 'أظهر المزيد' : 'Show More'}</span>
           <svg 
             width="18" height="18" viewBox="0 0 24 24" fill="none" 
@@ -61,7 +61,7 @@ const CompoundCarousel = () => {
         <div className="scroll-container" ref={scrollRef}>
           {/* SEPARATE CARD: Discover More - Redirects to /compounds */}
           <div className="discover-card">
-            <Link href="/" className="discover-link">
+            <Link href="/properties" className="discover-link">
               <span>{isRTL ? 'اكتشف أكثر' : 'Discover More'}</span>
               <svg 
                 width="20" height="20" viewBox="0 0 24 24" fill="none" 

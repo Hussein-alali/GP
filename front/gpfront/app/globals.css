@@ -1589,3 +1589,86 @@ html[dir="rtl"] .floating-chat-icon {
   right: auto;
   left: 30px;
 }
+
+
+
+/*Property*/
+.house-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.house-card:hover { transform: translateY(-5px); }
+
+.card-media {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.card-media .badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.card-body { padding: 15px; }
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.price { font-size: 1.4rem; font-weight: 800; color: #333; }
+.price-sqm { color: #888; font-size: 0.9rem; }
+
+.features {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+  color: #666;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn-call, .btn-whatsapp {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-whatsapp { color: #25D366; border-color: #25D366; }
+.btn-call { color: #008ccf; border-color: #008ccf; }
+
+
+.profile-icon-btn {
+  transition: transform 0.2s ease;
+}
+
+.profile-icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.profile-icon-btn svg:hover {
+  stroke: #008ccf; /* يتغير للون الأزرق الفاتح عند المرور عليه */
+}

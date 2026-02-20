@@ -1,2 +1,2 @@
-# Front_GP
+# GP
 

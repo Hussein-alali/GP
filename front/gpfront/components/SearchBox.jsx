@@ -1,19 +1,19 @@
 "use client";
 import React, { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { useRouter } from 'next/navigation'; // Import for navigation
+import { useRouter } from 'next/navigation';
 
 const SearchBox = () => {
   const { language } = useLanguage();
   const router = useRouter();
   const isRTL = language === 'ar';
   
-  // State Management
+  // إدارة الحالة
   const [searchType, setSearchType] = useState('buy');
   const [activePopup, setActivePopup] = useState(null);
   const [location, setLocation] = useState("");
-  const [price, setPrice] = useState(500000);
-  const [area, setArea] = useState(150);
+  const [price, setPrice] = useState(""); // جعل السعر فارغاً افتراضياً للفلترة المرنة
+  const [area, setArea] = useState(""); // جعل المساحة فارغة افتراضياً
   const [selectedType, setSelectedType] = useState(null);
 
   const propertyTypes = [
@@ -22,21 +22,42 @@ const SearchBox = () => {
     { id: 'villas', ar: 'فلل', en: 'Villas' },
     { id: 'chalets', ar: 'شاليهات', en: 'Chalets' },
   ];
-
   const togglePopup = (type) => setActivePopup(activePopup === type ? null : type);
 
-  // Search Submission Logic
+  const handleTypeChange = (type) => {
+    setSearchType(type);
+    // تصفير القيم عند تغيير النوع لضمان فلترة نظيفة
+    setPrice("");
+  };
+
+  // ✅ منطق إرسال البحث المحدث للفلترة المرنة
   const handleSearch = () => {
     const params = new URLSearchParams();
     
-    // Only add filters if they have a value selected
-    if (location) params.append('location', location);
-    if (selectedType) params.append('type', selectedType.id);
-    params.append('maxPrice', price);
-    params.append('maxArea', area);
-    params.append('searchType', searchType);
+    // 1. إضافة الموقع فقط إذا كان هناك نص مدخل
+    if (location.trim()) {
+      params.append('location', location.trim());
+    }
 
-    // Redirect to the properties page with the query string
+    // 2. إضافة نوع العقار فقط إذا تم اختياره
+    if (selectedType) {
+      params.append('type', selectedType.id);
+    }
+    
+    // 3. إضافة السعر الأقصى فقط إذا قام المستخدم بتحريك السلايدر (أو إدخال قيمة)
+    if (price) {
+      params.append('maxPrice', price.toString());
+    }
+
+    // 4. إضافة المساحة القصوى فقط إذا تم تحديدها
+    if (area) {
+      params.append('maxArea', area.toString());
+    }
+    
+    // 5. نوع البحث (دائماً موجود: إما بيع أو إيجار)
+    params.append('searchType', searchType.toLowerCase());
+
+    // التوجيه لصفحة النتائج بالبارامترات المختارة فقط
     router.push(`/properties?${params.toString()}`);
   };
 
@@ -48,10 +69,16 @@ const SearchBox = () => {
             {isRTL ? '433,740 عقار للبيع و للإيجار' : '433,740 Properties for Buy & Rent'}
           </span>
           <div className="type-toggle">
-            <button className={`toggle-btn ${searchType === 'rent' ? 'active' : ''}`} onClick={() => setSearchType('rent')}>
+            <button 
+              className={`toggle-btn ${searchType === 'rent' ? 'active' : ''}`} 
+              onClick={() => handleTypeChange('rent')}
+            >
               {isRTL ? 'للإيجار' : 'For Rent'}
             </button>
-            <button className={`toggle-btn ${searchType === 'buy' ? 'active' : ''}`} onClick={() => setSearchType('buy')}>
+            <button 
+              className={`toggle-btn ${searchType === 'buy' ? 'active' : ''}`} 
+              onClick={() => handleTypeChange('buy')}
+            >
               {isRTL ? 'للبيع' : 'For Buy'}
             </button>
           </div>
@@ -72,17 +99,17 @@ const SearchBox = () => {
             {isRTL ? 'بحث' : 'Search'}
           </button>
 
-          {/* AREA SLIDER FILTER */}
+          {/* فلاتر المساحة */}
           <div className="custom-filter-item">
             <div className={`filter-text-box ${activePopup === 'area' ? 'active' : ''}`} onClick={() => togglePopup('area')}>
-              <span>{isRTL ? `المساحة: ${area} م²` : `Area: ${area} m²`}</span>
+              <span>{area ? (isRTL ? `المساحة: ${area} م²` : `Area: ${area} m²`) : (isRTL ? 'المساحة' : 'Area')}</span>
               <span className={`arrow-icon ${activePopup === 'area' ? 'up' : 'down'}`}></span>
             </div>
             {activePopup === 'area' && (
               <div className="simple-range-popup">
-                <div className="slider-display">{area} {isRTL ? 'متر مربع' : 'm²'}</div>
+                <div className="slider-display">{area || 0} {isRTL ? 'متر مربع' : 'm²'}</div>
                 <input 
-                  type="range" min="10" max="1000" step="10" value={area} 
+                  type="range" min="10" max="1000" step="10" value={area || 10} 
                   onChange={(e) => setArea(e.target.value)} className="visual-slider" 
                 />
                 <button className="apply-btn" onClick={() => setActivePopup(null)}>{isRTL ? 'تطبيق' : 'Apply'}</button>
@@ -90,25 +117,30 @@ const SearchBox = () => {
             )}
           </div>
 
-          {/* PRICE SLIDER FILTER */}
+          {/* فلاتر السعر */}
           <div className="custom-filter-item">
             <div className={`filter-text-box ${activePopup === 'price' ? 'active' : ''}`} onClick={() => togglePopup('price')}>
-              <span>{isRTL ? `السعر: ${price} ج.م` : `Price: ${price} EGP`}</span>
+              <span>{price ? (isRTL ? `السعر: ${Number(price).toLocaleString()} ج.م` : `Price: ${Number(price).toLocaleString()} EGP`) : (isRTL ? 'السعر' : 'Price')}</span>
               <span className={`arrow-icon ${activePopup === 'price' ? 'up' : 'down'}`}></span>
             </div>
             {activePopup === 'price' && (
               <div className="simple-range-popup">
-                <div className="slider-display">{Number(price).toLocaleString()} {isRTL ? 'جنيه' : 'EGP'}</div>
+                <div className="slider-display">{Number(price || 0).toLocaleString()} {isRTL ? 'جنيه' : 'EGP'}</div>
                 <input 
-                  type="range" min="100000" max="20000000" step="50000" value={price} 
-                  onChange={(e) => setPrice(e.target.value)} className="visual-slider" 
+                  type="range" 
+                  min={searchType === 'rent' ? "500" : "100000"} 
+                  max={searchType === 'rent' ? "100000" : "20000000"} 
+                  step={searchType === 'rent' ? "500" : "50000"} 
+                  value={price || (searchType === 'rent' ? 500 : 100000)} 
+                  onChange={(e) => setPrice(e.target.value)} 
+                  className="visual-slider" 
                 />
                 <button className="apply-btn" onClick={() => setActivePopup(null)}>{isRTL ? 'تطبيق' : 'Apply'}</button>
               </div>
             )}
           </div>
 
-          {/* TYPE FILTER */}
+          {/* فلتر نوع العقار */}
           <div className="custom-filter-item">
             <div className={`filter-text-box ${activePopup === 'type' ? 'active' : ''}`} onClick={() => togglePopup('type')}>
               <span>

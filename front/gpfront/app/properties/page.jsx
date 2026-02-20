@@ -1,235 +1,69 @@
 "use client";
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import PropertyCard from '@/components/PropertyCard';
-import { useLanguage } from '@/context/LanguageContext';
-import { realEstateAPI } from '@/services/api';
 
 const PropertiesContent = () => {
-  const { language } = useLanguage();
-  const isRTL = language === 'ar';
   const searchParams = useSearchParams();
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  // Get values from URL or set to null if empty
-  const query = {
-    location: searchParams.get('location') || "",
-    type: searchParams.get('type') || null,
-    maxPrice: searchParams.get('maxPrice') || null,
-    maxArea: searchParams.get('maxArea') || null,
-    searchType: searchParams.get('searchType') || 'buy'
-  };
+  // 1. جعل المصفوفة فارغة تماماً لكي لا تظهر أي عقارات استاتيكية
+  const [allHouses, setAllHouses] = useState([]);
 
-  // Fetch properties from backend
+  // 2. تحميل كافة العقارات من الـ LocalStorage فقط
   useEffect(() => {
-    const fetchProperties = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const filters = {};
-        if (query.maxPrice) {
-          filters.max_price = parseFloat(query.maxPrice);
-        }
-        if (query.maxPrice && !filters.max_price) {
-          // If min price is needed, you can add it here
-        }
+    const savedProps = JSON.parse(localStorage.getItem('myProperties') || '[]');
+    setAllHouses(savedProps);
+  }, []);
 
-        const data = await realEstateAPI.getProperties(filters);
-        setProperties(data || []);
-      } catch (err) {
-        setError(err.message || 'Failed to load properties');
-        console.error('Error fetching properties:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperties();
-  }, [searchParams]);
-
-  // Transform backend data to match frontend format
-  const transformProperty = (property) => {
-    return {
-      id: property.id,
-      title_ar: property.type || 'عقار',
-      title_en: property.type || 'Property',
-      price: property.price,
-      area: property.area,
-      rooms: property.bedrooms,
-      baths: property.bathrooms,
-      location_ar: property.location,
-      location_en: property.location,
-      type: property.type,
-      searchType: query.searchType,
-      image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750"
-    };
+  // 3. الحصول على قيم البحث من الرابط (URL)
+ // 3. الحصول على قيم البحث من الرابط (URL)
+  const query = {
+    location: (searchParams.get('location') || "").toLowerCase(),
+    type: searchParams.get('type') || null,
+    maxPrice: parseFloat(searchParams.get('maxPrice')) || Infinity,
+    maxArea: parseFloat(searchParams.get('maxArea')) || Infinity,
+    // التأكد من تحويل قيمة البحث لنص صغير (toLowerCase)
+    searchType: (searchParams.get('searchType') || 'buy').toLowerCase() 
   };
 
-  // Mock Database - Fallback if API fails
-const allHouses = [
-  { 
-    id: 1, 
-    title_ar: "شقة للبيع في التجمع", 
-    title_en: "Apartment in Tagamoa", 
-    price: 2100000, 
-    area: 150, 
-    rooms: 3, 
-    baths: 2, 
-    location_ar: "القاهرة الجديدة", 
-    location_en: "New Cairo", 
-    type: "apartments", 
-    searchType: "buy", 
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750" 
-  },
-  { 
-    id: 2, 
-    title_ar: "فيلا مودرن بحديقة", 
-    title_en: "Modern Villa with Garden", 
-    price: 7000000, 
-    area: 400, 
-    rooms: 5, 
-    baths: 4, 
-    location_ar: "6 أكتوبر", 
-    location_en: "6th of October", 
-    type: "villas", 
-    searchType: "buy", 
-    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6" 
-  },
-  { 
-    id: 3, 
-    title_ar: "شقة فاخرة للإيجار", 
-    title_en: "Luxury Apartment for Rent", 
-    price: 15000, 
-    area: 120, 
-    rooms: 2, 
-    baths: 2, 
-    location_ar: "الشيخ زايد", 
-    location_en: "Sheikh Zayed", 
-    type: "apartments", 
-    searchType: "rent", 
-    image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb" 
-  },
-  { 
-    id: 4, 
-    title_ar: "شاليه على البحر مباشرة", 
-    title_en: "Front-line Beach Chalet", 
-    price: 3500000, 
-    area: 90, 
-    rooms: 2, 
-    baths: 1, 
-    location_ar: "الساحل الشمالي", 
-    location_en: "North Coast", 
-    type: "chalets", 
-    searchType: "buy", 
-    image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2" 
-  },
-  { 
-    id: 5, 
-    title_ar: "شقة مفروشة للإيجار", 
-    title_en: "Furnished Apartment for Rent", 
-    price: 25000, 
-    area: 180, 
-    rooms: 3, 
-    baths: 3, 
-    location_ar: "المعادي", 
-    location_en: "Maadi", 
-    type: "furnished-apartments", 
-    searchType: "rent", 
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688" 
-  },
-  { 
-    id: 6, 
-    title_ar: "بنتهاوس مع روف خاص", 
-    title_en: "Penthouse with Private Roof", 
-    price: 4800000, 
-    area: 220, 
-    rooms: 4, 
-    baths: 3, 
-    location_ar: "القاهرة الجديدة", 
-    location_en: "New Cairo", 
-    type: "apartments", 
-    searchType: "buy", 
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267" 
-  },
-  { 
-    id: 7, 
-    title_ar: "فيلا مستقلة للإيجار", 
-    title_en: "Standalone Villa for Rent", 
-    price: 80000, 
-    area: 500, 
-    rooms: 6, 
-    baths: 5, 
-    location_ar: "الرحاب", 
-    location_en: "Al Rehab", 
-    type: "villas", 
-    searchType: "rent", 
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811" 
-  },
-  { 
-    id: 8, 
-    title_ar: "استوديو مريح وصغير", 
-    title_en: "Cozy Small Studio", 
-    price: 1200000, 
-    area: 60, 
-    rooms: 1, 
-    baths: 1, 
-    location_ar: "مدينتي", 
-    location_en: "Madinaty", 
-    type: "apartments", 
-    searchType: "buy", 
-    image: "https://images.unsplash.com/photo-1484154218962-a197022b5858" 
-  }
-];
+  // 4. منطق الفلترة
+  const filteredHouses = allHouses.filter(house => {
+    // التأكد من وجود القيم قبل المقارنة لتجنب الأخطاء
+    const houseLocationAr = (house.location_ar || "").toLowerCase();
+    const houseLocationEn = (house.location_en || "").toLowerCase();
+    const houseSearchType = (house.searchType || "buy").toLowerCase();
 
-  // Transform properties from backend
-  const transformedProperties = properties.map(transformProperty);
-
-  // Filtering Logic: If field is empty, it returns true (no filter applied)
-  const filteredHouses = transformedProperties.filter(house => {
-    const matchLocation = !query.location || house.location_ar.includes(query.location) || house.location_en.toLowerCase().includes(query.location.toLowerCase());
+    const matchLocation = houseLocationAr.includes(query.location) || 
+                          houseLocationEn.includes(query.location);
+    
     const matchType = !query.type || house.type === query.type;
-    const matchPrice = !query.maxPrice || house.price <= parseFloat(query.maxPrice);
-    const matchArea = !query.maxArea || house.area <= parseFloat(query.maxArea);
-    const matchSearchType = !query.searchType || house.searchType === query.searchType;
+    const matchPrice = parseFloat(house.price) <= query.maxPrice;
+    const matchArea = parseFloat(house.area) <= query.maxArea;
+    
+    // ✅ التأكد من مطابقة نوع البحث (buy/rent) بدقة
+    const matchSearchType = houseSearchType === query.searchType;
 
     return matchLocation && matchType && matchPrice && matchArea && matchSearchType;
   });
-
   return (
-    <div className="properties-page" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="container" style={{ paddingTop: '120px', paddingBottom: '50px', maxWidth: '1200px', margin: '0 auto', padding: '120px 20px 50px' }}>
-        <h1 style={{ marginBottom: '30px', color: '#004d7a' }}>
-          {isRTL ? `نتائج البحث (${filteredHouses.length})` : `Search Results (${filteredHouses.length})`}
+    <div style={{ paddingTop: '120px', paddingBottom: '50px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '0 20px' }}>
+        <h1 style={{ color: '#004d7a', margin: 0 }}>
+          {query.searchType === 'buy' ? 'عقارات للبيع' : 'عقارات للإيجار'} ({filteredHouses.length})
         </h1>
-        
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <p>{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
-          </div>
-        )}
-
-        {error && !loading && (
-          <div style={{ 
-            padding: '20px', 
-            marginBottom: '20px', 
-            backgroundColor: '#fee', 
-            color: '#c33', 
-            borderRadius: '8px'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>
-            {filteredHouses.length > 0 ? (
-              filteredHouses.map(house => <PropertyCard key={house.id} property={house} />)
-            ) : (
-              <p>{isRTL ? "لا توجد نتائج تطابق بحثك." : "No results match your search."}</p>
-            )}
+      </div>
+      
+      {/* عرض النتائج أو رسالة تنبيه إذا كانت المصفوفة فارغة */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px', padding: '0 20px' }}>
+        {filteredHouses.length > 0 ? (
+          filteredHouses.map(house => (
+            <PropertyCard key={house.id} property={house} />
+          ))
+        ) : (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px', color: '#666' }}>
+            <h2>{query.location ? 'لا توجد نتائج تطابق بحثك' : 'لا توجد عقارات مضافة حالياً'}</h2>
+            <p>يمكنك إضافة عقارات جديدة من خلال صفحة الملف الشخصي.</p>
           </div>
         )}
       </div>
@@ -237,14 +71,13 @@ const allHouses = [
   );
 };
 
-// Main Page Component wrapped in Suspense for Next.js searchParams
-const PropertiesPage = () => (
-  <>
-    <Navbar />
-    <Suspense fallback={<div>Loading...</div>}>
-      <PropertiesContent />
-    </Suspense>
-  </>
-);
-
-export default PropertiesPage;
+export default function PropertiesPage() {
+  return (
+    <>
+      <Navbar />
+      <Suspense fallback={<div>Loading...</div>}>
+        <PropertiesContent />
+      </Suspense>
+    </>
+  );
+}

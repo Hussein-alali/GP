@@ -1,15 +1,57 @@
 // app/login/page.jsx
 "use client";
-import React, { useState } from 'react'; // 1. Import useState
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { authAPI } from '@/services/api';
 
 const LoginPage = () => {
-  // 2. Create state to track password visibility
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // 3. Helper function to toggle state
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Store basic user info (email from form since backend doesn't return user object)
+      const userInfo = {
+        email: formData.email,
+        // You may want to fetch user details after login
+      };
+      localStorage.setItem('user', JSON.stringify(userInfo));
+
+      // Redirect to home or profile page
+      router.push('/');
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,35 +78,56 @@ const LoginPage = () => {
             <p>Sign in to your account</p>
           </div>
 
-          <form>
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div style={{ 
+                padding: '12px', 
+                marginBottom: '20px', 
+                backgroundColor: '#fee', 
+                color: '#c33', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
+
             <div className="form-group">
               <label className="form-label">Email</label>
               <div className="form-input-wrapper">
-                <input type="email" placeholder="name@example.com" className="form-input" />
+                <input 
+                  type="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@example.com" 
+                  className="form-input"
+                  required
+                />
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">Password</label>
               <div className="form-input-wrapper">
-                {/* 4. Use state to determine input type: 'text' or 'password' */}
                 <input 
                   type={showPassword ? "text" : "password"} 
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="••••••••" 
-                  className="form-input" 
+                  className="form-input"
+                  required
                 />
                 
-                {/* 5. Add onClick handler to the icon span */}
                 <span 
                   className="password-eye-icon" 
                   onClick={togglePasswordVisibility}
-                  style={{ cursor: 'pointer' }} // Ensure it looks clickable
+                  style={{ cursor: 'pointer' }}
                 >
                   {showPassword ? (
-                    // Eye OFF Icon (Slash) - when visible
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                   ) : (
-                    // Eye ON Icon (Normal) - when hidden
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   )}
                 </span>
@@ -76,7 +139,9 @@ const LoginPage = () => {
               <Link href="/forgot-password" className="forgot-password">Forgot Password?</Link>
             </div>
 
-            <button type="submit" className="login-submit-btn">Login</button>
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
 
             {/* Social Buttons Section */}
 <div className="social-buttons">

@@ -2,15 +2,68 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { authAPI } from '@/services/api';
 
 const RegisterPage = () => {
-    // 2. Create state to track password visibility
-      const [showPassword, setShowPassword] = useState(false);
-    
-      // 3. Helper function to toggle state
-      const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
-      };
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms & Conditions');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await authAPI.register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Store user data from response (backend returns {id, email})
+      if (response.id && response.email) {
+        localStorage.setItem('user', JSON.stringify({
+          id: response.id,
+          email: response.email,
+          username: formData.username,
+        }));
+      }
+
+      // Redirect to login page
+      router.push('/login');
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="login-page-container">
       <div className="login-card">
@@ -38,45 +91,74 @@ const RegisterPage = () => {
             <p>It's free and easy to get started</p>
           </div>
 
-          <form>
-            {/* 1. Full Name Input (New) */}
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div style={{ 
+                padding: '12px', 
+                marginBottom: '20px', 
+                backgroundColor: '#fee', 
+                color: '#c33', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
+
+            {/* Username Input */}
             <div className="form-group">
-              <label className="form-label">Full Name</label>
+              <label className="form-label">Username</label>
               <div className="form-input-wrapper">
-                <input type="text" placeholder="John Doe" className="form-input" />
+                <input 
+                  type="text" 
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  placeholder="John Doe" 
+                  className="form-input"
+                  required
+                />
               </div>
             </div>
 
-            {/* 2. Email Input */}
+            {/* Email Input */}
             <div className="form-group">
               <label className="form-label">Email Address</label>
               <div className="form-input-wrapper">
-                <input type="email" placeholder="name@example.com" className="form-input" />
+                <input 
+                  type="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@example.com" 
+                  className="form-input"
+                  required
+                />
               </div>
             </div>
 
-            {/* 3. Password Input */}
+            {/* Password Input */}
             <div className="form-group">
               <label className="form-label">Password</label>
               <div className="form-input-wrapper">
-                {/* 4. Use state to determine input type: 'text' or 'password' */}
                 <input 
                   type={showPassword ? "text" : "password"} 
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="••••••••" 
-                  className="form-input" 
+                  className="form-input"
+                  required
                 />
                 
-                {/* 5. Add onClick handler to the icon span */}
                 <span 
                   className="password-eye-icon" 
                   onClick={togglePasswordVisibility}
-                  style={{ cursor: 'pointer' }} // Ensure it looks clickable
+                  style={{ cursor: 'pointer' }}
                 >
                   {showPassword ? (
-                    // Eye OFF Icon (Slash) - when visible
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                   ) : (
-                    // Eye ON Icon (Normal) - when hidden
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   )}
                 </span>
@@ -86,13 +168,19 @@ const RegisterPage = () => {
             {/* Terms & Conditions Checkbox */}
             <div className="form-options" style={{justifyContent: 'flex-start'}}>
               <label className="remember-me">
-                <input type="checkbox" />
+                <input 
+                  type="checkbox" 
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                />
                 <span>I agree to the <Link href="/terms" style={{color: '#2b70fa'}}>Terms & Conditions</Link></span>
               </label>
             </div>
 
             {/* Register Button */}
-            <button type="submit" className="login-submit-btn">Register</button>
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? 'Registering...' : 'Register'}
+            </button>
 
             {/* Social Divider */}
             <div className="social-divider">

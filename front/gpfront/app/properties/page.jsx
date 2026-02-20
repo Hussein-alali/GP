@@ -1,25 +1,74 @@
 "use client";
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import PropertyCard from '@/components/PropertyCard';
 import { useLanguage } from '@/context/LanguageContext';
+import { realEstateAPI } from '@/services/api';
 
 const PropertiesContent = () => {
   const { language } = useLanguage();
   const isRTL = language === 'ar';
   const searchParams = useSearchParams();
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Get values from URL or set to null if empty
   const query = {
     location: searchParams.get('location') || "",
     type: searchParams.get('type') || null,
-    maxPrice: searchParams.get('maxPrice') || Infinity,
-    maxArea: searchParams.get('maxArea') || Infinity,
+    maxPrice: searchParams.get('maxPrice') || null,
+    maxArea: searchParams.get('maxArea') || null,
     searchType: searchParams.get('searchType') || 'buy'
   };
 
-  // Mock Database - In a real app, you would fetch this from your backend
+  // Fetch properties from backend
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const filters = {};
+        if (query.maxPrice) {
+          filters.max_price = parseFloat(query.maxPrice);
+        }
+        if (query.maxPrice && !filters.max_price) {
+          // If min price is needed, you can add it here
+        }
+
+        const data = await realEstateAPI.getProperties(filters);
+        setProperties(data || []);
+      } catch (err) {
+        setError(err.message || 'Failed to load properties');
+        console.error('Error fetching properties:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [searchParams]);
+
+  // Transform backend data to match frontend format
+  const transformProperty = (property) => {
+    return {
+      id: property.id,
+      title_ar: property.type || 'عقار',
+      title_en: property.type || 'Property',
+      price: property.price,
+      area: property.area,
+      rooms: property.bedrooms,
+      baths: property.bathrooms,
+      location_ar: property.location,
+      location_en: property.location,
+      type: property.type,
+      searchType: query.searchType,
+      image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750"
+    };
+  };
+
+  // Mock Database - Fallback if API fails
 const allHouses = [
   { 
     id: 1, 
@@ -135,13 +184,16 @@ const allHouses = [
   }
 ];
 
+  // Transform properties from backend
+  const transformedProperties = properties.map(transformProperty);
+
   // Filtering Logic: If field is empty, it returns true (no filter applied)
-  const filteredHouses = allHouses.filter(house => {
-    const matchLocation = house.location_ar.includes(query.location) || house.location_en.toLowerCase().includes(query.location.toLowerCase());
+  const filteredHouses = transformedProperties.filter(house => {
+    const matchLocation = !query.location || house.location_ar.includes(query.location) || house.location_en.toLowerCase().includes(query.location.toLowerCase());
     const matchType = !query.type || house.type === query.type;
-    const matchPrice = house.price <= query.maxPrice;
-    const matchArea = house.area <= query.maxArea;
-    const matchSearchType = house.searchType === query.searchType;
+    const matchPrice = !query.maxPrice || house.price <= parseFloat(query.maxPrice);
+    const matchArea = !query.maxArea || house.area <= parseFloat(query.maxArea);
+    const matchSearchType = !query.searchType || house.searchType === query.searchType;
 
     return matchLocation && matchType && matchPrice && matchArea && matchSearchType;
   });
@@ -153,13 +205,33 @@ const allHouses = [
           {isRTL ? `نتائج البحث (${filteredHouses.length})` : `Search Results (${filteredHouses.length})`}
         </h1>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>
-          {filteredHouses.length > 0 ? (
-            filteredHouses.map(house => <PropertyCard key={house.id} property={house} />)
-          ) : (
-            <p>{isRTL ? "لا توجد نتائج تطابق بحثك." : "No results match your search."}</p>
-          )}
-        </div>
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <p>{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div style={{ 
+            padding: '20px', 
+            marginBottom: '20px', 
+            backgroundColor: '#fee', 
+            color: '#c33', 
+            borderRadius: '8px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>
+            {filteredHouses.length > 0 ? (
+              filteredHouses.map(house => <PropertyCard key={house.id} property={house} />)
+            ) : (
+              <p>{isRTL ? "لا توجد نتائج تطابق بحثك." : "No results match your search."}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

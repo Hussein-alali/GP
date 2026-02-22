@@ -9,28 +9,28 @@ const AddPropertyPage = () => {
   const isRTL = language === 'ar';
   const router = useRouter();
 
-  // الحالة العامة
+  // 1. تحديث الحالة لتشمل الوصف
   const [apartment, setApartment] = useState({
     title_ar: '', title_en: '', price: '', area: '', 
     location_ar: '', location_en: '', type: 'apartments',
     rooms: '', baths: '', images: [], 
+    description: '', // حقل الوصف الجديد
     searchType: 'rent' 
   });
 
-  // حالة التحكم في القائمة المنسدلة لنوع العقار
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const propertyTypes = [
     { id: 'apartments', ar: 'شقة', en: 'Apartment' },
-    { id: 'furnished-apartments', ar: 'شقة مفروشة', en: 'furnished-apartments' },
+    { id: 'furnished-apartments', ar: 'شقة مفروشة', en: 'Furnished Apartments' },
     { id: 'villas', ar: 'فيلا', en: 'Villa' },
-    { id: 'chalets', ar: 'شاليه', en: 'Chalet' },
+    { id: 'chalets', ar: 'شاليهات', en: 'Chalet' },
   ];
 
   const currentType = propertyTypes.find(t => t.id === apartment.type);
 
-  // معالج الصور المتعددة والضغط
+  // معالج الصور المتعددة
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
@@ -50,7 +50,7 @@ const AddPropertyPage = () => {
           
           setApartment(prev => ({
             ...prev,
-            images: [...prev.images, compressedBase64].slice(0, 5)
+            images: [...prev.images, compressedBase64].slice(0, 10)
           }));
         };
       };
@@ -90,7 +90,6 @@ const AddPropertyPage = () => {
           <div style={modalBox}>
             <div style={{ fontSize: '4rem', marginBottom: '15px' }}>🎉</div>
             <h2 style={{ color: '#004d7a', marginBottom: '10px' }}>{isRTL ? 'تم النشر بنجاح!' : 'Published Successfully!'}</h2>
-            <p style={{ color: '#666', marginBottom: '25px' }}>{isRTL ? 'عقارك متاح الآن للجميع في صفحة العقارات.' : 'Your property is now live.'}</p>
             <button onClick={() => router.push('/properties')} style={modalBtn}>{isRTL ? 'عرض العقارات' : 'View Properties'}</button>
           </div>
         </div>
@@ -103,9 +102,9 @@ const AddPropertyPage = () => {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           
+          {/* قسم نوع المعاملة والنوع */}
           <div style={formSection}>
             <div style={gridRow}>
-              {/* اختيار نوع المعاملة */}
               <div style={{ flex: 1 }}>
                 <h3 style={sectionTitleSmall}>{isRTL ? 'نوع المعاملة' : 'Transaction'}</h3>
                 <div style={toggleWrapper}>
@@ -118,34 +117,17 @@ const AddPropertyPage = () => {
                 </div>
               </div>
 
-              {/* اختيار نوع العقار العصري (Modern Dropdown) */}
               <div style={{ flex: 1, position: 'relative' }}>
                 <h3 style={sectionTitleSmall}>{isRTL ? 'نوع العقار' : 'Property Type'}</h3>
-                <div 
-                  style={modernDropdownTrigger} 
-                  onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                >
+                <div style={modernDropdownTrigger} onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}>
                   <span>{isRTL ? currentType.ar : currentType.en}</span>
-                  <span style={{ transform: isTypeDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: '0.3s' }}>▼</span>
+                  <span>▼</span>
                 </div>
-
                 {isTypeDropdownOpen && (
                   <div style={modernDropdownMenu}>
                     {propertyTypes.map((type) => (
-                      <div 
-                        key={type.id} 
-                        style={{
-                          ...modernDropdownOption,
-                          backgroundColor: apartment.type === type.id ? '#f0f9ff' : 'transparent',
-                          color: apartment.type === type.id ? '#008ccf' : '#4a5568',
-                        }}
-                        onClick={() => {
-                          setApartment({...apartment, type: type.id});
-                          setIsTypeDropdownOpen(false);
-                        }}
-                      >
+                      <div key={type.id} style={modernDropdownOption} onClick={() => { setApartment({...apartment, type: type.id}); setIsTypeDropdownOpen(false); }}>
                         {isRTL ? type.ar : type.en}
-                        {apartment.type === type.id && <span style={{ float: isRTL ? 'left' : 'right' }}>✓</span>}
                       </div>
                     ))}
                   </div>
@@ -154,60 +136,56 @@ const AddPropertyPage = () => {
             </div>
           </div>
 
-          {/* ... الأقسام الأخرى (المعلومات، التفاصيل، الصور) تبقى كما هي ... */}
+          {/* القسم 1: المعلومات الأساسية */}
           <div style={formSection}>
             <h3 style={sectionTitle}>{isRTL ? '1. المعلومات الأساسية' : '1. Basic Information'}</h3>
             <div style={inputGroup}>
               <label style={labelStyle}>{isRTL ? 'عنوان الإعلان' : 'Property Title'}</label>
               <input style={inputStyle} placeholder={isRTL ? "شقة مودرن بفيو رائع" : "e.g. Modern Apartment"} onChange={(e) => setApartment({...apartment, title_ar: e.target.value, title_en: e.target.value})} required />
             </div>
+
+            {/* ✅ حقل الوصف الجديد */}
+            <div style={inputGroup}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <label style={labelStyle}>{isRTL ? 'وصف العقار' : 'Property Description'}</label>
+                <span style={{ fontSize: '0.8rem', color: apartment.description.length >= 250 ? 'red' : '#888' }}>
+                  {apartment.description.length}/250
+                </span>
+              </div>
+              <textarea 
+                style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
+                maxLength="250"
+                placeholder={isRTL ? "اكتب تفاصيل العقار هنا..." : "Write property details here..."}
+                value={apartment.description}
+                onChange={(e) => setApartment({...apartment, description: e.target.value})}
+                required
+              />
+            </div>
+
             <div style={gridRow}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{apartment.searchType === 'buy' ? (isRTL ? 'السعر' : 'Price') : (isRTL ? 'الإيجار' : 'Rent')}</label>
-                <input type="number" style={inputStyle} onChange={(e) => setApartment({...apartment, price: e.target.value})} required />
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, price: e.target.value})} required />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{isRTL ? 'المساحة (م²)' : 'Area (m²)'}</label>
-                <input type="number" style={inputStyle} onChange={(e) => setApartment({...apartment, area: e.target.value})} required />
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, area: e.target.value})} required />
               </div>
             </div>
           </div>
 
           <div style={formSection}>
             <h3 style={sectionTitle}>{isRTL ? '2. التفاصيل والموقع' : '2. Details & Location'}</h3>
-        <div style={gridRow}>
-  {/* حقل الغرف */}
-  <div style={{ flex: 1 }}>
-    <label style={labelStyle}>{isRTL ? 'الغرف' : 'Rooms'}</label>
-    <input 
-      type="number" 
-      min="1" 
-      style={inputStyle} 
-      onKeyDown={(e) => ["e", "E", "-", "+"].includes(e.key) && e.preventDefault()} // منع إدخال الرموز غير الرقمية
-      onChange={(e) => {
-        const val = Math.max(1, parseInt(e.target.value) || 1); // التأكد من أن القيمة لا تقل عن 1
-        setApartment({...apartment, rooms: val});
-      }} 
-      required 
-    />
-  </div>
-
-  {/* حقل الحمامات */}
-  <div style={{ flex: 1 }}>
-    <label style={labelStyle}>{isRTL ? 'الحمامات' : 'Baths'}</label>
-    <input 
-      type="number" 
-      min="1" 
-      style={inputStyle} 
-      onKeyDown={(e) => ["e", "E", "-", "+"].includes(e.key) && e.preventDefault()} // منع إدخال الرموز غير الرقمية
-      onChange={(e) => {
-        const val = Math.max(1, parseInt(e.target.value) || 1); // التأكد من أن القيمة لا تقل عن 1
-        setApartment({...apartment, baths: val});
-      }} 
-      required 
-    />
-  </div>
-</div>
+            <div style={gridRow}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{isRTL ? 'الغرف' : 'Rooms'}</label>
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, rooms: e.target.value})} required />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{isRTL ? 'الحمامات' : 'Baths'}</label>
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, baths: e.target.value})} required />
+              </div>
+            </div>
             <div style={{ marginTop: '20px' }}>
               <label style={labelStyle}>{isRTL ? 'الموقع' : 'Location'}</label>
               <input style={inputStyle} onChange={(e) => setApartment({...apartment, location_ar: e.target.value, location_en: e.target.value})} required />
@@ -215,7 +193,7 @@ const AddPropertyPage = () => {
           </div>
 
           <div style={formSection}>
-            <h3 style={sectionTitle}>{isRTL ? '3. الصور (حتى 5)' : '3. Photos (Up to 5)'}</h3>
+            <h3 style={sectionTitle}>{isRTL ? '3. الصور (حتى 10)' : '3. Photos (Up to 10)'}</h3>
             <label style={uploadBox}>
               <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImagesChange} />
               <div style={{ textAlign: 'center' }}>📸<br/>{isRTL ? 'أضف صور' : 'Add Photos'}</div>
@@ -237,45 +215,12 @@ const AddPropertyPage = () => {
   );
 };
 
-// --- التنسيقات (Styles) المحدثة ---
-const modernDropdownTrigger = {
-  padding: '12px 16px',
-  borderRadius: '10px',
-  border: '1.5px solid #e2e8f0',
-  backgroundColor: '#f9fbff',
-  cursor: 'pointer',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  fontSize: '1rem',
-  color: '#4a5568'
-};
-
-const modernDropdownMenu = {
-  position: 'absolute',
-  top: '100%',
-  left: 0,
-  right: 0,
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-  marginTop: '8px',
-  zIndex: 100,
-  overflow: 'hidden',
-  border: '1px solid #edf2f7'
-};
-
-const modernDropdownOption = {
-  padding: '12px 16px',
-  cursor: 'pointer',
-  transition: '0.2s',
-  fontSize: '0.95rem',
-  fontWeight: '500'
-};
-
-// ... التنسيقات السابقة كما هي ...
+// --- Styles ---
+const modernDropdownTrigger = { padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #e2e8f0', backgroundColor: '#f9fbff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
+const modernDropdownMenu = { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, border: '1px solid #edf2f7' };
+const modernDropdownOption = { padding: '12px 16px', cursor: 'pointer', transition: '0.2s' };
 const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, backdropFilter: 'blur(5px)' };
-const modalBox = { background: '#fff', padding: '40px', borderRadius: '20px', textAlign: 'center', maxWidth: '400px', width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' };
+const modalBox = { background: '#fff', padding: '40px', borderRadius: '20px', textAlign: 'center', maxWidth: '400px', width: '90%' };
 const modalBtn = { padding: '12px 30px', background: '#008ccf', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' };
 const formSection = { background: '#ffffff', borderRadius: '16px', padding: '30px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #edf2f7' };
 const sectionTitle = { fontSize: '1.2rem', color: '#004d7a', marginBottom: '25px', borderBottom: '2px solid #f0f4f8', paddingBottom: '10px', fontWeight: '700' };
@@ -285,7 +230,7 @@ const inputGroup = { display: 'flex', flexDirection: 'column', gap: '10px', marg
 const labelStyle = { fontSize: '0.95rem', fontWeight: '600', color: '#4a5568', marginBottom: '8px', display: 'block' };
 const inputStyle = { padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '1rem', outline: 'none', backgroundColor: '#f9fbff', width: '100%', boxSizing: 'border-box' };
 const uploadBox = { width: '100%', padding: '20px', border: '2px dashed #cbd5e0', borderRadius: '15px', cursor: 'pointer', display: 'block', backgroundColor: '#fcfdff' };
-const removeBadge = { position: 'absolute', top: '5px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '20%',width: '15px', cursor: 'pointer' };
+const removeBadge = { position: 'absolute', top: '5px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', width: '20px', height: '20px' };
 const submitBtnStyle = { padding: '18px', background: 'linear-gradient(135deg, #008ccf 0%, #005f8c 100%)', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '1.2rem' };
 const toggleWrapper = { display: 'flex', gap: '5px', background: '#f0f4f8', padding: '5px', borderRadius: '10px' };
 const toggleBtn = { flex: 1, padding: '10px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' };

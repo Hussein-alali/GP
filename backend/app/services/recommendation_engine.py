@@ -36,11 +36,13 @@ def _build_dataframe_from_db(db: Session) -> pd.DataFrame:
 
         rows.append(
             {
+                "id": p.id,
                 "type": p.type,
                 "price": price,
                 "area": area,
                 "bedrooms": p.bedrooms,
                 "bathrooms": p.bathrooms,
+                "location": p.location,
                 # Fields that don't exist in the DB are synthesized
                 "level": 0,
                 "city": p.location,
@@ -82,6 +84,17 @@ def recommend_for_user(user_id: int, db: Session):
             result_df = recommender.find_best_value(n=10)
     else:
         result_df = recommender.find_best_value(n=10)
+
+    # Reattach DB ids after recommendation, since the recommender may return a subset of columns.
+    key_cols = ["type", "price", "area", "bedrooms", "bathrooms", "city"]
+    source_cols = [c for c in ["id", *key_cols] if c in df.columns]
+    if "id" in source_cols and all(c in result_df.columns for c in key_cols):
+        source = (
+            df[source_cols]
+            .drop_duplicates(subset=key_cols, keep="first")
+            .copy()
+        )
+        result_df = result_df.merge(source, on=key_cols, how="left")
 
     return {
         "recommended_properties": result_df.to_dict(orient="records"),

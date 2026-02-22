@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     username: str
@@ -39,6 +39,8 @@ class UserAddRealEstateRequest(BaseModel):
     location: str
     type: str
     price: float
+    description: Optional[str] = None
+    images: Optional[List[str]] = None
 
 class UserAddRealEstateResponse(UserAddRealEstateRequest):
     id: int
@@ -52,3 +54,5 @@ class RealEstateUpdate(BaseModel):
     location: Optional[str] = None
     type: Optional[str] = None
     price: Optional[float] = None
+    description: Optional[str] = None
+    images: Optional[List[str]] = None

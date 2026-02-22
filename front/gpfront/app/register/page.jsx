@@ -88,7 +88,7 @@ const RegisterPage = () => {
         <div className="login-form-side">
           <div className="welcome-header">
             <h2>Create Your Account</h2>
-            <p>It's free and easy to get started</p>
+            <p>It&apos;s free and easy to get started</p>
           </div>
 
           <form onSubmit={handleSubmit}>

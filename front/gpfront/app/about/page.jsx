@@ -50,15 +50,15 @@ const AboutPage = () => {
     ? (
       <>
         بدأت رحلتنا من قلب القاهرة كفريق من الأصدقاء الذين واجهوا بأنفسهم صعوبة البحث عن مسكن مناسب. لقد رأينا كيف يمكن لرحلة البحث عن منزل أن تتحول من حلم جميل إلى عبء ثقيل مليء بالحيرة والشكوك. 
-        لذلك، قررنا بناء "العقارات الذكية" لتكون أكثر من مجرد موقع للبحث؛ أردناها أن تكون رفيقاً ذكياً يساعدكم في تقدير القيمة الحقيقية لكل عقار بلمسة واحدة. 
+        لذلك، قررنا بناء &quot;العقارات الذكية&quot; لتكون أكثر من مجرد موقع للبحث؛ أردناها أن تكون رفيقاً ذكياً يساعدكم في تقدير القيمة الحقيقية لكل عقار بلمسة واحدة. 
         لقد وضعنا شغفنا في كل زاوية من هذا المشروع، لضمان أن يحصل كل شخص على معلومات واضحة وشفافة تساعده في تأمين مستقبل أسرته. 
         رؤيتنا تتجاوز مجرد البيع والشراء؛ نحن نسعى لخلق مجتمع عقاري رقمي يضع الصدق والسهولة في مقدمة أولوياته، لنحول كل ضغطة زر إلى خطوة واثقة نحو باب منزلك الجديد.
       </>
     ) : (
       <>
         Our journey began in the heart of Cairo as a team of friends who experienced firsthand the struggles of finding the right home. We saw how the search for a dream house could turn from an exciting milestone into a stressful burden filled with uncertainty. 
-        Because of this, we decided to build "Smart Estate" to be more than just a search tool; we wanted it to be a smart companion that helps you understand the true value of every property with a single touch. 
-        We poured our passion into every corner of this project, ensuring that every person has access to clear, honest information to help secure their family's future. 
+        Because of this, we decided to build &quot;Smart Estate&quot; to be more than just a search tool; we wanted it to be a smart companion that helps you understand the true value of every property with a single touch. 
+        We poured our passion into every corner of this project, ensuring that every person has access to clear, honest information to help secure their family&apos;s future. 
         Our vision goes beyond simple transactions; we strive to create a digital community that prioritizes trust and simplicity, turning every click into a confident step toward the front door of your new home.
       </>
     )

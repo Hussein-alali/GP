@@ -148,13 +148,13 @@ const AddPropertyPage = () => {
             <div style={inputGroup}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <label style={labelStyle}>{isRTL ? 'وصف العقار' : 'Property Description'}</label>
-                <span style={{ fontSize: '0.8rem', color: apartment.description.length >= 250 ? 'red' : '#888' }}>
-                  {apartment.description.length}/250
+                <span style={{ fontSize: '0.8rem', color: apartment.description.length >= 500 ? 'red' : '#888' }}>
+                  {apartment.description.length}/500
                 </span>
               </div>
               <textarea 
                 style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
-                maxLength="250"
+                maxLength="500"
                 placeholder={isRTL ? "اكتب تفاصيل العقار هنا..." : "Write property details here..."}
                 value={apartment.description}
                 onChange={(e) => setApartment({...apartment, description: e.target.value})}

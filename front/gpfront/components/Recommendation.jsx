@@ -134,7 +134,7 @@ const Recommendation = () => {
 
               return (
                 <div key={index} className="compound-card clickable-card">
-                  <Link href="/" className="card-inner-link">
+                  <Link href={item.id ? `/properties/${item.id}` : "/properties"} className="card-inner-link">
                     <div
                       className="card-image"
                       style={{

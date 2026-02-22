@@ -1,5 +1,5 @@
 // API Base URL - Update this to match your backend URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 // Helper function to get auth token from localStorage
 const getAuthToken = () => {
@@ -168,6 +168,17 @@ export const recommendationsAPI = {
   getRecommendations: async (userId) => {
     return apiRequest(`/api/recommendations/user/${userId}`, {
       method: 'GET',
+    });
+  },
+};
+
+// Prediction API
+export const predictionAPI = {
+  // Predict property price
+  predictPrice: async (data) => {
+    return apiRequest('/api/predict/price', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 };

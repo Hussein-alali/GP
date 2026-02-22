@@ -33,7 +33,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.login({
+      await authAPI.login({
         email: formData.email,
         password: formData.password,
       });
@@ -162,7 +162,7 @@ const LoginPage = () => {
   </a>
 
 </div>
-            <div className="register-link">Don't have an account? <Link href="/register">Register</Link></div>
+            <div className="register-link">Don&apos;t have an account? <Link href="/register">Register</Link></div>
 
           </form>
         </div>

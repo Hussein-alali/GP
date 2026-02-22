@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, ForeignKey
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
 #from database import Base
@@ -25,6 +25,8 @@ class RealEstate(Base):
     location = Column(String, nullable=False)
     type = Column(String, nullable=False)
     price = Column(Float, nullable=False)
+    description = Column(Text, nullable=True)
+    images = Column(JSON, nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"))  # ربط باليوزر
     owner = relationship("User", back_populates="real_estates")

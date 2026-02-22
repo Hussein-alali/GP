@@ -415,4 +415,4 @@ class RealEstateRecommender:
         return combined
 
 
-print("✓ RealEstateRecommender class defined successfully!")
+print("RealEstateRecommender class defined successfully!")

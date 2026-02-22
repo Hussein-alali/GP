@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
@@ -10,9 +10,23 @@ const Navbar = () => {
   const router = useRouter();
   const { t, toggleLanguage } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // محاكاة حالة تسجيل الدخول (يمكنك تغييرها لاحقاً لتربط بـ Firebase أو State)
-  const isLoggedIn = false; 
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        setIsLoggedIn(Boolean(token || user));
+      } catch {
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
 
   if (pathname === '/login' || pathname === '/register' || pathname === '/contact') {
     return null;

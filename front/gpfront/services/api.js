@@ -1,10 +1,34 @@
 // API Base URL - Update this to match your backend URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const AUTH_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 // Helper function to get auth token from localStorage
 const getAuthToken = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
+    const issuedAtRaw = localStorage.getItem('authTokenIssuedAt');
+    const issuedAt = issuedAtRaw ? Number(issuedAtRaw) : 0;
+
+    if (!token || token === 'undefined' || token === 'null') {
+      return null;
+    }
+
+    // Treat old tokens without timestamp as invalid to avoid stale auth UI.
+    if (!issuedAt || Number.isNaN(issuedAt)) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authTokenIssuedAt');
+      localStorage.removeItem('user');
+      return null;
+    }
+
+    if (Date.now() - issuedAt > AUTH_TOKEN_MAX_AGE_MS) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authTokenIssuedAt');
+      localStorage.removeItem('user');
+      return null;
+    }
+
+    return token;
   }
   return null;
 };
@@ -13,6 +37,7 @@ const getAuthToken = () => {
 const setAuthToken = (token) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('authToken', token);
+    localStorage.setItem('authTokenIssuedAt', String(Date.now()));
   }
 };
 
@@ -20,6 +45,8 @@ const setAuthToken = (token) => {
 const removeAuthToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('authTokenIssuedAt');
+    localStorage.removeItem('user');
   }
 };
 

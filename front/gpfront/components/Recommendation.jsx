@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link'; 
-import { recommendationsAPI } from '@/services/api';
+import { authAPI, recommendationsAPI, realEstateAPI } from '@/services/api';
 
 const Recommendation = () => {
   const { language } = useLanguage();
@@ -12,11 +12,43 @@ const Recommendation = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const guestFallbackItems = [
+    { id: null, type: 'Apartment', city: 'Cairo', bedrooms: 2, bathrooms: 1, area: 120, price: 1800000 },
+    { id: null, type: 'Villa', city: 'New Cairo', bedrooms: 4, bathrooms: 3, area: 320, price: 8200000 },
+    { id: null, type: 'Duplex', city: 'Sheikh Zayed', bedrooms: 3, bathrooms: 2, area: 210, price: 4900000 },
+    { id: null, type: 'Studio', city: 'Nasr City', bedrooms: 1, bathrooms: 1, area: 75, price: 950000 },
+    { id: null, type: 'Penthouse', city: '6th of October', bedrooms: 3, bathrooms: 3, area: 260, price: 6100000 },
+    { id: null, type: 'Townhouse', city: 'Madinaty', bedrooms: 3, bathrooms: 3, area: 240, price: 5400000 },
+  ];
 
   useEffect(() => {
+    const pickRandomItems = (list, count = 8) => {
+      if (!Array.isArray(list)) return [];
+      return [...list]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, count);
+    };
+
+    const normalizeProperties = (data) => {
+      if (Array.isArray(data)) return data;
+      return data?.properties || data?.real_estates || [];
+    };
+
+    const loadRandomPublicProperties = async () => {
+      const properties = await realEstateAPI.getProperties();
+      return pickRandomItems(normalizeProperties(properties));
+    };
+
     const fetchRecommendations = async () => {
       try {
         setLoading(true);
+        setError('');
+
+        // When user is not logged in, show random public properties (no protected endpoint).
+        if (!authAPI.isAuthenticated()) {
+          setItems(pickRandomItems(guestFallbackItems));
+          return;
+        }
 
         // Try to read user id from localStorage if available, otherwise fall back to 1
         let userId = 1;
@@ -36,8 +68,16 @@ const Recommendation = () => {
 
         const data = await recommendationsAPI.getRecommendations(userId);
         setItems(data.recommended_properties || []);
-      } catch (err) {
-        setError(err.message || 'Failed to load recommendations.');
+      } catch {
+        try {
+          // Fallback to random public properties when personalized fetch fails.
+          const randomItems = await loadRandomPublicProperties();
+          setItems(randomItems);
+          setError('');
+        } catch {
+          setItems(pickRandomItems(guestFallbackItems));
+          setError('');
+        }
       } finally {
         setLoading(false);
       }

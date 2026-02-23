@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, Text, JSON
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, Text
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import relationship
 from .database import Base
 #from database import Base
@@ -26,7 +28,7 @@ class RealEstate(Base):
     type = Column(String, nullable=False)
     price = Column(Float, nullable=False)
     description = Column(Text, nullable=True)
-    images = Column(JSON, nullable=True)
+    images = Column(MutableList.as_mutable(JSONB), nullable=False, default=list)
 
     owner_id = Column(Integer, ForeignKey("users.id"))  # ربط باليوزر
     owner = relationship("User", back_populates="real_estates")

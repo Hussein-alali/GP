@@ -1,102 +1,124 @@
-# from fastapi import APIRouter, Query
-# from app.schemas import PropertyCreate
+from base64 import b64encode
+from typing import List, Optional
 
-# router = APIRouter()
-
-# @router.post("/")
-# def add_property(property: PropertyCreate):
-#     return {"message": "Property added", "property": property}
-
-# @router.get("/")
-# def get_properties(
-#     city: str | None = None,
-#     min_price: float | None = None,
-#     max_price: float | None = None
-# ):
-#     return {"properties": []}
-
-# @router.get("/{property_id}")
-# def get_property(property_id: int):
-#     return {"property_id": property_id}
-
-# @router.put("/{property_id}")
-# def update_property(property_id: int, property: PropertyCreate):
-#     return {"message": "Updated"}
-
-# @router.delete("/{property_id}")
-# def delete_property(property_id: int):
-#     return {"message": "Deleted"}
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
-from typing import List
+
 from app.database import get_db
 from app.models import RealEstate
-from app.schemas import RealEstateUpdate, UserAddRealEstateRequest, UserAddRealEstateResponse
+from app.schemas import UserAddRealEstateResponse
 
 router = APIRouter()
 
-#Add property
-@router.post("/", response_model=UserAddRealEstateResponse)
-def add_property(
-    data: UserAddRealEstateRequest,
-    db: Session = Depends(get_db)
-):
-    new_property = RealEstate(**data.model_dump())
-    db.add(new_property)
-    db.commit()
-    db.refresh(new_property)
-    return new_property
 
-# Get all properties by price
+def encode_uploaded_images(files: List[UploadFile]) -> List[str]:
+    encoded_images: List[str] = []
+    for file in files:
+        content = file.file.read()
+        if not content:
+            continue
+        mime_type = file.content_type or "application/octet-stream"
+        encoded = b64encode(content).decode("utf-8")
+        encoded_images.append(f"data:{mime_type};base64,{encoded}")
+    return encoded_images
+
+
+@router.post("/", response_model=UserAddRealEstateResponse)
+async def add_property(
+    area: float = Form(...),
+    bedrooms: int = Form(...),
+    bathrooms: int = Form(...),
+    location: str = Form(...),
+    type: str = Form(...),
+    price: float = Form(...),
+    owner_id: int = Form(...),
+    description: Optional[str] = Form(None),
+    files: Optional[List[UploadFile]] = File(None),
+    db: Session = Depends(get_db),
+):
+    images = encode_uploaded_images(files) if files else []
+    new_prop = RealEstate(
+        area=area,
+        bedrooms=bedrooms,
+        bathrooms=bathrooms,
+        location=location,
+        type=type,
+        price=price,
+        owner_id=owner_id,
+        description=description,
+        images=images,
+    )
+    db.add(new_prop)
+    db.commit()
+    db.refresh(new_prop)
+    return new_prop
+
+
 @router.get("/", response_model=List[UserAddRealEstateResponse])
-def get_properties_By_Price(
+def get_properties_by_price(
     min_price: float | None = None,
     max_price: float | None = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = db.query(RealEstate)
-
     if min_price is not None:
         query = query.filter(RealEstate.price >= min_price)
     if max_price is not None:
         query = query.filter(RealEstate.price <= max_price)
-
     return query.all()
 
-# Get property by id
+
 @router.get("/{property_id}", response_model=UserAddRealEstateResponse)
-def get_property_By_ID(property_id: int, db: Session = Depends(get_db)):
+def get_property_by_id(property_id: int, db: Session = Depends(get_db)):
     prop = db.query(RealEstate).filter(RealEstate.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
     return prop
 
-# Update property
+
 @router.put("/{property_id}", response_model=UserAddRealEstateResponse)
-def update_property(
+async def update_property(
     property_id: int,
-    data: RealEstateUpdate,
-    db: Session = Depends(get_db)
+    area: Optional[float] = Form(None),
+    bedrooms: Optional[int] = Form(None),
+    bathrooms: Optional[int] = Form(None),
+    location: Optional[str] = Form(None),
+    type: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    description: Optional[str] = Form(None),
+    files: Optional[List[UploadFile]] = File(None),
+    db: Session = Depends(get_db),
 ):
     prop = db.query(RealEstate).filter(RealEstate.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(prop, key, value)
+    update_data = {
+        "area": area,
+        "bedrooms": bedrooms,
+        "bathrooms": bathrooms,
+        "location": location,
+        "type": type,
+        "price": price,
+        "description": description,
+    }
+    for key, value in update_data.items():
+        if value is not None:
+            setattr(prop, key, value)
+
+    if files is not None:
+        prop.images = encode_uploaded_images(files)
 
     db.commit()
     db.refresh(prop)
     return prop
 
-# Delete property
+
 @router.delete("/{property_id}")
 def delete_property(property_id: int, db: Session = Depends(get_db)):
     prop = db.query(RealEstate).filter(RealEstate.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
-
     db.delete(prop)
     db.commit()
     return {"message": "Deleted successfully"}

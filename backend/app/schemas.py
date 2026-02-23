@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
+
 
 class UserCreate(BaseModel):
     username: str
@@ -9,17 +10,6 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
-    
-class PropertyCreate(BaseModel):
-    title: str
-    price: float
-    area: float
-    bedrooms: int
-    bathrooms: int
-    city: str
-    district: str
-    type: str
-    purpose: str
 
 class PricePredictionRequest(BaseModel):
     area: float
@@ -31,7 +21,7 @@ class PricePredictionRequest(BaseModel):
 class PricePredictionResponse(BaseModel):
     predicted_price: float
     confidence: float
-    
+
 class UserAddRealEstateRequest(BaseModel):
     area: float
     bedrooms: int
@@ -40,11 +30,21 @@ class UserAddRealEstateRequest(BaseModel):
     type: str
     price: float
     description: Optional[str] = None
-    images: Optional[List[str]] = None
+    # This will now store the LIST of strings (file paths) in Postgres
+    images: List[str] = Field(default_factory=list)
 
-class UserAddRealEstateResponse(UserAddRealEstateRequest):
+class UserAddRealEstateResponse(BaseModel):
     id: int
+    area: float
+    bedrooms: int
+    bathrooms: int
+    location: str
+    type: str
+    price: float
+    description: Optional[str] = None
+    images: List[str] = Field(default_factory=list) # This returns stored image values from PostgreSQL
     owner_id: Optional[int] = None
+    
     model_config = ConfigDict(from_attributes=True)
 
 class RealEstateUpdate(BaseModel):

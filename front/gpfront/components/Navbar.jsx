@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { getAuthToken } from '@/services/api';
 import SideMenu from './SideMenu';
 
 const Navbar = () => {
@@ -16,40 +15,9 @@ const Navbar = () => {
   useEffect(() => {
     const checkAuth = () => {
       try {
-        const rawToken = getAuthToken();
-        const rawUser = localStorage.getItem('user');
-        const token = rawToken ? rawToken.trim() : '';
-
-        const hasValidToken = (() => {
-          if (!token || token === 'undefined' || token === 'null') return false;
-          try {
-            const decoded = atob(token);
-            return decoded.includes(':');
-          } catch {
-            return false;
-          }
-        })();
-
-        const hasValidUser = (() => {
-          if (!rawUser) return false;
-          try {
-            const parsed = JSON.parse(rawUser);
-            return Boolean(parsed && parsed.email);
-          } catch {
-            return false;
-          }
-        })();
-
-        // Keep UI in logged-out state if localStorage contains partial/stale auth data.
-        if (!hasValidToken || !hasValidUser) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('authTokenIssuedAt');
-          localStorage.removeItem('user');
-          setIsLoggedIn(false);
-          return;
-        }
-
-        setIsLoggedIn(true);
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+        setIsLoggedIn(Boolean(token || user));
       } catch {
         setIsLoggedIn(false);
       }
@@ -57,12 +25,8 @@ const Navbar = () => {
 
     checkAuth();
     window.addEventListener('storage', checkAuth);
-    window.addEventListener('focus', checkAuth);
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      window.removeEventListener('focus', checkAuth);
-    };
-  }, [pathname]);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
 
   if (pathname === '/login' || pathname === '/register' || pathname === '/contact') {
     return null;

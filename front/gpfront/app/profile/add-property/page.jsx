@@ -36,6 +36,7 @@ const AddPropertyPage = () => {
   const [imageFiles, setImageFiles] = useState([]);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [imageError, setImageError] = useState("");
 
   const propertyTypes = [
     { id: 'apartments', ar: 'شقة', en: 'Apartment' },
@@ -66,6 +67,7 @@ const AddPropertyPage = () => {
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
+    setImageError("");
 
     setImageFiles((prev) => [...prev, ...files].slice(0, 10));
 
@@ -95,7 +97,13 @@ const AddPropertyPage = () => {
 
   const removeImage = (index) => {
     setApartment((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) {
+        setImageError(isRTL ? "يجب إضافة صورة واحدة على الأقل." : "At least one image is required.");
+      }
+      return next;
+    });
   };
 
   const toggleFeature = (featureKey) => {
@@ -109,6 +117,10 @@ const AddPropertyPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (imageFiles.length === 0) {
+      setImageError(isRTL ? "يجب إضافة صورة واحدة على الأقل." : "At least one image is required.");
+      return;
+    }
     try {
       const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       const parsedUser = storedUser ? JSON.parse(storedUser) : null;
@@ -234,9 +246,10 @@ const AddPropertyPage = () => {
           <div style={formSection}>
             <h3 style={sectionTitle}>{isRTL ? '3. الصور (حتى 10)' : '3. Photos (Up to 10)'}</h3>
             <label style={uploadBox}>
-              <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImagesChange} />
+              <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImagesChange} required={imageFiles.length === 0} />
               <div style={{ textAlign: 'center' }}>📷<br />{isRTL ? 'إضافة صور' : 'Add Photos'}</div>
             </label>
+            {imageError && <p style={{ color: "#dc2626", marginTop: "10px", marginBottom: 0, fontWeight: 600 }}>{imageError}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '15px', marginTop: '20px' }}>
               {apartment.images.map((img, index) => (
                 <div key={index} style={{ position: 'relative', height: '100px', borderRadius: '10px', overflow: 'hidden' }}>

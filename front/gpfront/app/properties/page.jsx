@@ -25,6 +25,8 @@ const AVAILABLE_FEATURES = [
 ];
 const PRICE_BARS = [8, 14, 22, 34, 46, 44, 66, 58, 88, 96, 90, 74, 50, 94, 76, 64, 60, 56, 46, 36, 28, 16, 10];
 const AREA_BARS = [6, 10, 14, 18, 58, 18, 66, 18, 50, 24, 20, 16, 14, 12, 16, 10, 8];
+const ITEMS_PER_PAGE = 9;
+const MAX_VISIBLE_PAGES = 9;
 
 const parseFeaturesParam = (raw) => {
   if (!raw) return [];
@@ -55,10 +57,7 @@ const normalizeProperty = (p) => {
     rooms: p.rooms ?? p.bedrooms ?? 0,
     baths: p.baths ?? p.bathrooms ?? 0,
     searchType: (p.searchType || "buy").toLowerCase(),
-    image:
-      p.image ||
-      p.image_url ||
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1600&auto=format&fit=crop",
+    image: p.image || p.image_url || "",
     images: p.images && p.images.length ? p.images : p.image_url ? [p.image_url] : [],
   };
 };
@@ -99,6 +98,7 @@ const PropertiesContent = () => {
   const [sidebarFilters, setSidebarFilters] = useState(null);
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const sortMenuRef = useRef(null);
   const t = isRTL
     ? {
@@ -342,6 +342,37 @@ const PropertiesContent = () => {
         return list.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
     }
   }, [filteredHouses, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(displayedHouses.length / ITEMS_PER_PAGE));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortBy, viewMode]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedHouses = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return displayedHouses.slice(start, start + ITEMS_PER_PAGE);
+  }, [displayedHouses, currentPage]);
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= MAX_VISIBLE_PAGES) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const half = Math.floor(MAX_VISIBLE_PAGES / 2);
+    let start = Math.max(1, currentPage - half);
+    let end = start + MAX_VISIBLE_PAGES - 1;
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - MAX_VISIBLE_PAGES + 1;
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [currentPage, totalPages]);
 
   const sortOptions = [
     { value: "newest", label: t.newest },
@@ -700,7 +731,7 @@ const PropertiesContent = () => {
               <div style={emptyBox}>{t.noMatch}</div>
             ) : viewMode === "grid" ? (
               <div style={gridWrap}>
-                {displayedHouses.map((house) => (
+                {paginatedHouses.map((house) => (
                   <PropertyCard
                     key={house.id}
                     property={house}
@@ -711,7 +742,7 @@ const PropertiesContent = () => {
               </div>
             ) : (
               <div style={listWrap}>
-                {displayedHouses.map((house) => (
+                {paginatedHouses.map((house) => (
                   <PropertyCard
                     key={house.id}
                     property={house}
@@ -720,6 +751,46 @@ const PropertiesContent = () => {
                     variant="list"
                   />
                 ))}
+              </div>
+            )}
+
+            {displayedHouses.length > 0 && totalPages > 1 && (
+              <div style={paginationWrap}>
+                <div style={paginationRow}>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page"
+                    style={{ ...paginationBtn, ...(currentPage === 1 ? paginationBtnDisabled : null) }}
+                  >
+                    ‹
+                  </button>
+
+                  {visiblePages.map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNum)}
+                      style={{
+                        ...paginationBtn,
+                        ...(currentPage === pageNum ? paginationBtnActive : null),
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page"
+                    style={{ ...paginationBtn, ...(currentPage === totalPages ? paginationBtnDisabled : null) }}
+                  >
+                    ›
+                  </button>
+                </div>
               </div>
             )}
           </section>
@@ -798,6 +869,24 @@ const cardsSection = { minWidth: 0 };
 const gridWrap = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "16px" };
 const listWrap = { display: "grid", gap: "12px" };
 const emptyBox = { background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "50px", textAlign: "center", color: "#64748b" };
+const paginationWrap = { display: "flex", justifyContent: "center", marginTop: "18px", marginBottom: "10px" };
+const paginationRow = { display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", flexWrap: "wrap" };
+const paginationBtn = {
+  width: "42px",
+  height: "42px",
+  borderRadius: "8px",
+  border: "1px solid #d1d5db",
+  background: "#fff",
+  color: "#475569",
+  cursor: "pointer",
+  fontWeight: 700,
+  fontSize: "1rem",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+const paginationBtnActive = { background: "#0b79c7", color: "#fff", border: "1px solid #0b79c7" };
+const paginationBtnDisabled = { opacity: 0.45, cursor: "not-allowed" };
 
 export default function PropertiesPage() {
   return (

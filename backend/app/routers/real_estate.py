@@ -40,6 +40,24 @@ def serialize_property(prop: RealEstate) -> dict:
     }
 
 
+def serialize_property_list_item(prop: RealEstate) -> dict:
+    first_image = (prop.images or [])[:1]
+    return {
+        "id": prop.id,
+        "area": prop.area,
+        "bedrooms": prop.bedrooms,
+        "bathrooms": prop.bathrooms,
+        "location": prop.location,
+        "type": prop.type,
+        "price": prop.price,
+        "description": prop.description,
+        # Keep list payload small: return only the first image preview.
+        "images": first_image,
+        "features": prop.features or [],
+        "owner_id": prop.owner_id,
+    }
+
+
 @router.post("/", response_model=UserAddRealEstateResponse)
 async def add_property(
     area: float = Form(...),
@@ -51,10 +69,12 @@ async def add_property(
     owner_id: int = Form(...),
     description: Optional[str] = Form(None),
     features: Optional[str] = Form(None),
-    files: Optional[List[UploadFile]] = File(None),
+    files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
-    images = encode_uploaded_images(files) if files else []
+    images = encode_uploaded_images(files)
+    if not images:
+        raise HTTPException(status_code=400, detail="At least one image is required")
     parsed_features: List[str] = []
     if features:
         try:
@@ -86,6 +106,7 @@ async def add_property(
 def get_properties_by_price(
     min_price: float | None = None,
     max_price: float | None = None,
+    include_images: bool = False,
     db: Session = Depends(get_db),
 ):
     query = db.query(RealEstate)
@@ -93,7 +114,10 @@ def get_properties_by_price(
         query = query.filter(RealEstate.price >= min_price)
     if max_price is not None:
         query = query.filter(RealEstate.price <= max_price)
-    return [serialize_property(prop) for prop in query.all()]
+    properties = query.all()
+    if include_images:
+        return [serialize_property(prop) for prop in properties]
+    return [serialize_property_list_item(prop) for prop in properties]
 
 
 @router.get("/{property_id}", response_model=UserAddRealEstateResponse)

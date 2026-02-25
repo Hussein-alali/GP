@@ -96,6 +96,16 @@ def recommend_for_user(user_id: int, db: Session):
         )
         result_df = result_df.merge(source, on=key_cols, how="left")
 
+    # Attach real images from DB for card rendering in frontend recommendations.
+    properties_by_id = {
+        p.id: p for p in db.query(RealEstate).all()
+    }
+    records = result_df.to_dict(orient="records")
+    for rec in records:
+        rec_id = rec.get("id")
+        prop = properties_by_id.get(rec_id)
+        rec["images"] = (prop.images or []) if prop else []
+
     return {
-        "recommended_properties": result_df.to_dict(orient="records"),
+        "recommended_properties": records,
     }

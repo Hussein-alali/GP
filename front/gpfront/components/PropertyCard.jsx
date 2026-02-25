@@ -86,9 +86,7 @@ const PropertyCard = ({
   const router = useRouter();
 
   const images = property?.images && property.images.length > 0 ? property.images : [property?.image || property?.image_url].filter(Boolean);
-  const mainImage =
-    images[0] ||
-    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1600&auto=format&fit=crop";
+  const mainImage = images[0] || "";
 
   const location =
     (isRTL ? (property?.location_ar || property?.location) : (property?.location_en || property?.location)) ||
@@ -172,9 +170,13 @@ const PropertyCard = ({
           ...media,
           ...(isList ? mediaList : null),
           ...(isCarousel ? mediaCarousel : null),
-          backgroundImage: `url(${mainImage})`,
+          backgroundImage: mainImage ? `url(${mainImage})` : "none",
+          backgroundColor: mainImage ? undefined : "#e2e8f0",
         }}
       >
+        {!mainImage && (
+          <div style={noImageOverlay}>{isRTL ? "لا توجد صورة" : "No Image"}</div>
+        )}
         <div style={priceBadge}>{priceBadgeText}</div>
 
         {showFavorite && (
@@ -278,6 +280,16 @@ const media = {
   backgroundSize: "cover",
   backgroundPosition: "center",
   position: "relative",
+};
+
+const noImageOverlay = {
+  position: "absolute",
+  inset: 0,
+  display: "grid",
+  placeItems: "center",
+  color: "#475569",
+  fontWeight: 800,
+  letterSpacing: "0.02em",
 };
 
 const priceBadge = {
@@ -392,4 +404,3 @@ const mediaCarousel = { height: "150px" };
 const bodyCarousel = { padding: "12px 14px 12px" };
 
 export default PropertyCard;
-

@@ -1,39 +1,75 @@
-"use client";
-import React, { useState } from 'react';
+﻿"use client";
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { useRouter } from 'next/navigation';
+import { authAPI } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
+import { realEstateAPI } from '@/services/api';
 
 const AddPropertyPage = () => {
   const { language } = useLanguage();
   const isRTL = language === 'ar';
   const router = useRouter();
 
-  // 1. تحديث الحالة لتشمل الوصف
+  useEffect(() => {
+    if (!authAPI.isAuthenticated()) {
+      router.replace('/login');
+    }
+  }, [router]);
+
   const [apartment, setApartment] = useState({
-    title_ar: '', title_en: '', price: '', area: '', 
-    location_ar: '', location_en: '', type: 'apartments',
-    rooms: '', baths: '', images: [], 
-    description: '', // حقل الوصف الجديد
-    searchType: 'rent' 
+    title_ar: '',
+    title_en: '',
+    price: '',
+    area: '',
+    location_ar: '',
+    location_en: '',
+    type: 'apartments',
+    rooms: '',
+    baths: '',
+    images: [],
+    description: '',
+    features: [],
+    searchType: 'rent',
   });
 
+  const [imageFiles, setImageFiles] = useState([]);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const propertyTypes = [
     { id: 'apartments', ar: 'شقة', en: 'Apartment' },
-    { id: 'furnished-apartments', ar: 'شقة مفروشة', en: 'Furnished Apartments' },
+    { id: 'furnished-apartments', ar: 'شقة مفروشة', en: 'Furnished Apartment' },
     { id: 'villas', ar: 'فيلا', en: 'Villa' },
-    { id: 'chalets', ar: 'شاليهات', en: 'Chalet' },
+    { id: 'chalets', ar: 'شاليه', en: 'Chalet' },
   ];
 
-  const currentType = propertyTypes.find(t => t.id === apartment.type);
+  const availableFeatures = [
+    { key: 'security', en: 'Security', ar: 'أمن' },
+    { key: 'balcony', en: 'Balcony', ar: 'شرفة' },
+    { key: 'elevator', en: 'Elevator', ar: 'مصعد' },
+    { key: 'ac', en: 'AC', ar: 'تكييف' },
+    { key: 'maid-room', en: 'Maid Room', ar: 'غرفة خدم' },
+    { key: 'water-meter', en: 'Water Meter', ar: 'عداد مياه' },
+    { key: 'landline', en: 'Landline', ar: 'هاتف أرضي' },
+    { key: 'covered-garage', en: 'Covered Garage', ar: 'جراج مغطى' },
+    { key: 'pool', en: 'Pool', ar: 'حمام سباحة' },
+    { key: 'private-garden', en: 'Private Garden', ar: 'حديقة خاصة' },
+    { key: 'electric-meter', en: 'Electric Meter', ar: 'عداد كهرباء' },
+    { key: 'kitchen-appliances', en: 'Kitchen Appliances', ar: 'أجهزة المطبخ' },
+    { key: 'kids-area', en: 'Kids Area', ar: 'منطقة ألعاب للأطفال' },
+    { key: 'pets-allowed', en: 'Pets Allowed', ar: 'مسموح بالحيوانات الأليفة' },
+  ];
 
-  // معالج الصور المتعددة
+  const currentType = propertyTypes.find((t) => t.id === apartment.type) || propertyTypes[0];
+
   const handleImagesChange = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setImageFiles((prev) => [...prev, ...files].slice(0, 10));
+
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const img = new Image();
@@ -47,10 +83,9 @@ const AddPropertyPage = () => {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-          
-          setApartment(prev => ({
+          setApartment((prev) => ({
             ...prev,
-            images: [...prev.images, compressedBase64].slice(0, 10)
+            images: [...prev.images, compressedBase64].slice(0, 10),
           }));
         };
       };
@@ -59,25 +94,42 @@ const AddPropertyPage = () => {
   };
 
   const removeImage = (index) => {
-    setApartment(prev => ({
+    setApartment((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleFeature = (featureKey) => {
+    setApartment((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      features: prev.features.includes(featureKey)
+        ? prev.features.filter((f) => f !== featureKey)
+        : [...prev.features, featureKey],
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const existingProperties = JSON.parse(localStorage.getItem('myProperties') || '[]');
-      const newProperty = { 
-        ...apartment, 
-        id: Date.now(), 
-        image: apartment.images[0] || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750'
-      };
-      localStorage.setItem('myProperties', JSON.stringify([...existingProperties, newProperty]));
+      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      const ownerId = parsedUser?.id || 1;
+
+      const formData = new FormData();
+      formData.append('area', String(apartment.area));
+      formData.append('bedrooms', String(apartment.rooms));
+      formData.append('bathrooms', String(apartment.baths));
+      formData.append('location', apartment.location_en || apartment.location_ar || '');
+      formData.append('type', apartment.type);
+      formData.append('price', String(apartment.price));
+      formData.append('owner_id', String(ownerId));
+      formData.append('description', apartment.description || '');
+      formData.append('features', JSON.stringify(apartment.features));
+      imageFiles.forEach((file) => formData.append('files', file));
+
+      await realEstateAPI.addProperty(formData);
       setShowSuccessModal(true);
-    } catch (error) {
-      alert(isRTL ? "مساحة التخزين ممتلئة!" : "Storage full!");
+    } catch {
+      alert(isRTL ? 'فشل في إضافة العقار.' : 'Failed to add property.');
     }
   };
 
@@ -88,30 +140,28 @@ const AddPropertyPage = () => {
       {showSuccessModal && (
         <div style={modalOverlay}>
           <div style={modalBox}>
-            <div style={{ fontSize: '4rem', marginBottom: '15px' }}>🎉</div>
+            <div style={{ fontSize: '3rem', marginBottom: '15px' }}>OK</div>
             <h2 style={{ color: '#004d7a', marginBottom: '10px' }}>{isRTL ? 'تم النشر بنجاح!' : 'Published Successfully!'}</h2>
             <button onClick={() => router.push('/properties')} style={modalBtn}>{isRTL ? 'عرض العقارات' : 'View Properties'}</button>
           </div>
         </div>
       )}
-      
+
       <div style={{ paddingTop: '120px', paddingBottom: '80px', maxWidth: '850px', margin: '0 auto', padding: '120px 20px' }}>
         <h1 style={{ color: '#004d7a', fontSize: '2.2rem', fontWeight: '800', marginBottom: '40px' }}>
           {isRTL ? 'إضافة عقار جديد' : 'List a New Property'}
         </h1>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          
-          {/* قسم نوع المعاملة والنوع */}
           <div style={formSection}>
             <div style={gridRow}>
               <div style={{ flex: 1 }}>
-                <h3 style={sectionTitleSmall}>{isRTL ? 'نوع المعاملة' : 'Transaction'}</h3>
+                <h3 style={sectionTitleSmall}>{isRTL ? 'نوع العملية' : 'Transaction'}</h3>
                 <div style={toggleWrapper}>
-                  <button type="button" onClick={() => setApartment({...apartment, searchType: 'buy'})} style={{...toggleBtn, backgroundColor: apartment.searchType === 'buy' ? '#008ccf' : '#fff', color: apartment.searchType === 'buy' ? '#fff' : '#4a5568'}}>
+                  <button type="button" onClick={() => setApartment({ ...apartment, searchType: 'buy' })} style={{ ...toggleBtn, backgroundColor: apartment.searchType === 'buy' ? '#008ccf' : '#fff', color: apartment.searchType === 'buy' ? '#fff' : '#4a5568' }}>
                     {isRTL ? 'للبيع' : 'For Buy'}
                   </button>
-                  <button type="button" onClick={() => setApartment({...apartment, searchType: 'rent'})} style={{...toggleBtn, backgroundColor: apartment.searchType === 'rent' ? '#008ccf' : '#fff', color: apartment.searchType === 'rent' ? '#fff' : '#4a5568'}}>
+                  <button type="button" onClick={() => setApartment({ ...apartment, searchType: 'rent' })} style={{ ...toggleBtn, backgroundColor: apartment.searchType === 'rent' ? '#008ccf' : '#fff', color: apartment.searchType === 'rent' ? '#fff' : '#4a5568' }}>
                     {isRTL ? 'للإيجار' : 'For Rent'}
                   </button>
                 </div>
@@ -121,12 +171,12 @@ const AddPropertyPage = () => {
                 <h3 style={sectionTitleSmall}>{isRTL ? 'نوع العقار' : 'Property Type'}</h3>
                 <div style={modernDropdownTrigger} onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}>
                   <span>{isRTL ? currentType.ar : currentType.en}</span>
-                  <span>▼</span>
+                  <span>v</span>
                 </div>
                 {isTypeDropdownOpen && (
                   <div style={modernDropdownMenu}>
                     {propertyTypes.map((type) => (
-                      <div key={type.id} style={modernDropdownOption} onClick={() => { setApartment({...apartment, type: type.id}); setIsTypeDropdownOpen(false); }}>
+                      <div key={type.id} style={modernDropdownOption} onClick={() => { setApartment({ ...apartment, type: type.id }); setIsTypeDropdownOpen(false); }}>
                         {isRTL ? type.ar : type.en}
                       </div>
                     ))}
@@ -136,40 +186,29 @@ const AddPropertyPage = () => {
             </div>
           </div>
 
-          {/* القسم 1: المعلومات الأساسية */}
           <div style={formSection}>
             <h3 style={sectionTitle}>{isRTL ? '1. المعلومات الأساسية' : '1. Basic Information'}</h3>
             <div style={inputGroup}>
-              <label style={labelStyle}>{isRTL ? 'عنوان الإعلان' : 'Property Title'}</label>
-              <input style={inputStyle} placeholder={isRTL ? "شقة مودرن بفيو رائع" : "e.g. Modern Apartment"} onChange={(e) => setApartment({...apartment, title_ar: e.target.value, title_en: e.target.value})} required />
+              <label style={labelStyle}>{isRTL ? 'عنوان العقار' : 'Property Title'}</label>
+              <input style={inputStyle} onChange={(e) => setApartment({ ...apartment, title_ar: e.target.value, title_en: e.target.value })} required />
             </div>
 
-            {/* ✅ حقل الوصف الجديد */}
             <div style={inputGroup}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <label style={labelStyle}>{isRTL ? 'وصف العقار' : 'Property Description'}</label>
-                <span style={{ fontSize: '0.8rem', color: apartment.description.length >= 500 ? 'red' : '#888' }}>
-                  {apartment.description.length}/500
-                </span>
+                <span style={{ fontSize: '0.8rem', color: apartment.description.length >= 500 ? 'red' : '#888' }}>{apartment.description.length}/500</span>
               </div>
-              <textarea 
-                style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
-                maxLength="500"
-                placeholder={isRTL ? "اكتب تفاصيل العقار هنا..." : "Write property details here..."}
-                value={apartment.description}
-                onChange={(e) => setApartment({...apartment, description: e.target.value})}
-                required
-              />
+              <textarea style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} maxLength="500" value={apartment.description} onChange={(e) => setApartment({ ...apartment, description: e.target.value })} required />
             </div>
 
             <div style={gridRow}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{apartment.searchType === 'buy' ? (isRTL ? 'السعر' : 'Price') : (isRTL ? 'الإيجار' : 'Rent')}</label>
-                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, price: e.target.value})} required />
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({ ...apartment, price: e.target.value })} required />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{isRTL ? 'المساحة (م²)' : 'Area (m²)'}</label>
-                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, area: e.target.value})} required />
+                <label style={labelStyle}>{isRTL ? 'المساحة (م²)' : 'Area (m2)'}</label>
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({ ...apartment, area: e.target.value })} required />
               </div>
             </div>
           </div>
@@ -179,16 +218,16 @@ const AddPropertyPage = () => {
             <div style={gridRow}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{isRTL ? 'الغرف' : 'Rooms'}</label>
-                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, rooms: e.target.value})} required />
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({ ...apartment, rooms: e.target.value })} required />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{isRTL ? 'الحمامات' : 'Baths'}</label>
-                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({...apartment, baths: e.target.value})} required />
+                <input type="number" min="1" style={inputStyle} onChange={(e) => setApartment({ ...apartment, baths: e.target.value })} required />
               </div>
             </div>
             <div style={{ marginTop: '20px' }}>
               <label style={labelStyle}>{isRTL ? 'الموقع' : 'Location'}</label>
-              <input style={inputStyle} onChange={(e) => setApartment({...apartment, location_ar: e.target.value, location_en: e.target.value})} required />
+              <input style={inputStyle} onChange={(e) => setApartment({ ...apartment, location_ar: e.target.value, location_en: e.target.value })} required />
             </div>
           </div>
 
@@ -196,15 +235,34 @@ const AddPropertyPage = () => {
             <h3 style={sectionTitle}>{isRTL ? '3. الصور (حتى 10)' : '3. Photos (Up to 10)'}</h3>
             <label style={uploadBox}>
               <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImagesChange} />
-              <div style={{ textAlign: 'center' }}>📸<br/>{isRTL ? 'أضف صور' : 'Add Photos'}</div>
+              <div style={{ textAlign: 'center' }}>📷<br />{isRTL ? 'إضافة صور' : 'Add Photos'}</div>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '15px', marginTop: '20px' }}>
               {apartment.images.map((img, index) => (
                 <div key={index} style={{ position: 'relative', height: '100px', borderRadius: '10px', overflow: 'hidden' }}>
                   <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button type="button" onClick={() => removeImage(index)} style={removeBadge}>×</button>
+                  <button type="button" onClick={() => removeImage(index)} style={removeBadge}>x</button>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div style={formSection}>
+            <h3 style={sectionTitle}>{isRTL ? '4. مميزات العقار' : '4. Property Features'}</h3>
+            <div style={featureWrap}>
+              {availableFeatures.map((f) => {
+                const active = apartment.features.includes(f.key);
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => toggleFeature(f.key)}
+                    style={{ ...featureChip, backgroundColor: active ? '#e7f0f8' : '#fff', borderColor: active ? '#bfdbfe' : '#d1d5db', color: active ? '#0b5fa8' : '#374151' }}
+                  >
+                    {isRTL ? f.ar : f.en}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -215,7 +273,6 @@ const AddPropertyPage = () => {
   );
 };
 
-// --- Styles ---
 const modernDropdownTrigger = { padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #e2e8f0', backgroundColor: '#f9fbff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
 const modernDropdownMenu = { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, border: '1px solid #edf2f7' };
 const modernDropdownOption = { padding: '12px 16px', cursor: 'pointer', transition: '0.2s' };
@@ -231,8 +288,11 @@ const labelStyle = { fontSize: '0.95rem', fontWeight: '600', color: '#4a5568', m
 const inputStyle = { padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '1rem', outline: 'none', backgroundColor: '#f9fbff', width: '100%', boxSizing: 'border-box' };
 const uploadBox = { width: '100%', padding: '20px', border: '2px dashed #cbd5e0', borderRadius: '15px', cursor: 'pointer', display: 'block', backgroundColor: '#fcfdff' };
 const removeBadge = { position: 'absolute', top: '5px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', width: '20px', height: '20px' };
+const featureWrap = { display: 'flex', flexWrap: 'wrap', gap: '10px' };
+const featureChip = { border: '1px solid #d1d5db', borderRadius: '999px', padding: '10px 14px', cursor: 'pointer', fontWeight: 600, background: '#fff' };
 const submitBtnStyle = { padding: '18px', background: 'linear-gradient(135deg, #008ccf 0%, #005f8c 100%)', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', fontSize: '1.2rem' };
 const toggleWrapper = { display: 'flex', gap: '5px', background: '#f0f4f8', padding: '5px', borderRadius: '10px' };
 const toggleBtn = { flex: 1, padding: '10px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' };
 
 export default AddPropertyPage;
+

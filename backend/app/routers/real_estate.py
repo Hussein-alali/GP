@@ -1,4 +1,5 @@
 from base64 import b64encode
+import json
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -23,6 +24,22 @@ def encode_uploaded_images(files: List[UploadFile]) -> List[str]:
     return encoded_images
 
 
+def serialize_property(prop: RealEstate) -> dict:
+    return {
+        "id": prop.id,
+        "area": prop.area,
+        "bedrooms": prop.bedrooms,
+        "bathrooms": prop.bathrooms,
+        "location": prop.location,
+        "type": prop.type,
+        "price": prop.price,
+        "description": prop.description,
+        "images": prop.images or [],
+        "features": prop.features or [],
+        "owner_id": prop.owner_id,
+    }
+
+
 @router.post("/", response_model=UserAddRealEstateResponse)
 async def add_property(
     area: float = Form(...),
@@ -33,10 +50,20 @@ async def add_property(
     price: float = Form(...),
     owner_id: int = Form(...),
     description: Optional[str] = Form(None),
+    features: Optional[str] = Form(None),
     files: Optional[List[UploadFile]] = File(None),
     db: Session = Depends(get_db),
 ):
     images = encode_uploaded_images(files) if files else []
+    parsed_features: List[str] = []
+    if features:
+        try:
+            loaded = json.loads(features)
+            if isinstance(loaded, list):
+                parsed_features = [str(item) for item in loaded if item]
+        except json.JSONDecodeError:
+            parsed_features = [part.strip() for part in features.split(",") if part.strip()]
+
     new_prop = RealEstate(
         area=area,
         bedrooms=bedrooms,
@@ -47,11 +74,12 @@ async def add_property(
         owner_id=owner_id,
         description=description,
         images=images,
+        features=parsed_features,
     )
     db.add(new_prop)
     db.commit()
     db.refresh(new_prop)
-    return new_prop
+    return serialize_property(new_prop)
 
 
 @router.get("/", response_model=List[UserAddRealEstateResponse])
@@ -65,7 +93,7 @@ def get_properties_by_price(
         query = query.filter(RealEstate.price >= min_price)
     if max_price is not None:
         query = query.filter(RealEstate.price <= max_price)
-    return query.all()
+    return [serialize_property(prop) for prop in query.all()]
 
 
 @router.get("/{property_id}", response_model=UserAddRealEstateResponse)
@@ -73,7 +101,7 @@ def get_property_by_id(property_id: int, db: Session = Depends(get_db)):
     prop = db.query(RealEstate).filter(RealEstate.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
-    return prop
+    return serialize_property(prop)
 
 
 @router.put("/{property_id}", response_model=UserAddRealEstateResponse)
@@ -86,6 +114,7 @@ async def update_property(
     type: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
     description: Optional[str] = Form(None),
+    features: Optional[str] = Form(None),
     files: Optional[List[UploadFile]] = File(None),
     db: Session = Depends(get_db),
 ):
@@ -108,10 +137,16 @@ async def update_property(
 
     if files is not None:
         prop.images = encode_uploaded_images(files)
+    if features is not None:
+        try:
+            loaded = json.loads(features)
+            prop.features = [str(item) for item in loaded if item] if isinstance(loaded, list) else []
+        except json.JSONDecodeError:
+            prop.features = [part.strip() for part in features.split(",") if part.strip()]
 
     db.commit()
     db.refresh(prop)
-    return prop
+    return serialize_property(prop)
 
 
 @router.delete("/{property_id}")

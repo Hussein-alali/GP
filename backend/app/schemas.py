@@ -32,6 +32,7 @@ class UserAddRealEstateRequest(BaseModel):
     description: Optional[str] = None
     # This will now store the LIST of strings (file paths) in Postgres
     images: List[str] = Field(default_factory=list)
+    features: List[str] = Field(default_factory=list)
 
 class UserAddRealEstateResponse(BaseModel):
     id: int
@@ -43,6 +44,7 @@ class UserAddRealEstateResponse(BaseModel):
     price: float
     description: Optional[str] = None
     images: List[str] = Field(default_factory=list) # This returns stored image values from PostgreSQL
+    features: List[str] = Field(default_factory=list)
     owner_id: Optional[int] = None
     
     model_config = ConfigDict(from_attributes=True)
@@ -56,3 +58,20 @@ class RealEstateUpdate(BaseModel):
     price: Optional[float] = None
     description: Optional[str] = None
     images: Optional[List[str]] = None
+    features: Optional[List[str]] = None
+
+
+class UserProfileUpdate(BaseModel):
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+
+
+class UserProfileResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    favorites: List[int] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)

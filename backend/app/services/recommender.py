@@ -52,7 +52,7 @@ class RealEstateRecommender:
         self.scaler = StandardScaler()
         self.features_scaled = self.scaler.fit_transform(self.features)
 
-        print(f"✓ Recommender initialized with {len(self.df):,} properties")
+        print(f"Recommender initialized with {len(self.df):,} properties")
 
     def recommend_by_budget(
         self,

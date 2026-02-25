@@ -80,6 +80,13 @@ models.Base.metadata.create_all(bind=engine)
 with engine.begin() as conn:
     conn.execute(text("ALTER TABLE real_estates ADD COLUMN IF NOT EXISTS description TEXT"))
     conn.execute(text("ALTER TABLE real_estates ADD COLUMN IF NOT EXISTS images JSONB"))
+    conn.execute(text("ALTER TABLE real_estates ADD COLUMN IF NOT EXISTS features JSONB"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites JSONB"))
+    conn.execute(text("UPDATE real_estates SET images = '[]'::jsonb WHERE images IS NULL"))
+    conn.execute(text("UPDATE real_estates SET features = '[]'::jsonb WHERE features IS NULL"))
+    conn.execute(text("UPDATE users SET favorites = '[]'::jsonb WHERE favorites IS NULL"))
 
 # 2. Folder Setup
 if not os.path.exists("static/images"):

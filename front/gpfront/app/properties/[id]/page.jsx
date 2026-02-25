@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import PropertyDetails from "@/components/PropertyDetails";
-import { realEstateAPI } from "@/services/api";
+import { authAPI, realEstateAPI } from "@/services/api";
 
 function normalizeProperty(p) {
   const title = `${p.type || "Property"} in ${p.location || "Unknown"}`;
@@ -32,6 +32,11 @@ export default function PropertyPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!authAPI.isAuthenticated()) {
+      router.replace("/login");
+      return;
+    }
+
     let active = true;
     (async () => {
       try {
@@ -40,7 +45,7 @@ export default function PropertyPage() {
         const data = await realEstateAPI.getProperty(id);
         if (!active) return;
         setProperty(normalizeProperty(data));
-      } catch (e) {
+      } catch {
         if (!active) return;
         setError("Property not found.");
       } finally {
@@ -50,7 +55,7 @@ export default function PropertyPage() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, router]);
 
   return (
     <div style={{ backgroundColor: "#f4f7f9", minHeight: "100vh" }}>

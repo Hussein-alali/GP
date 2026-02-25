@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { authAPI } from '@/services/api';
+import { authAPI, setAuthToken } from '@/services/api';
 
 const RegisterPage = () => {
   const router = useRouter();
@@ -47,17 +47,22 @@ const RegisterPage = () => {
         password: formData.password,
       });
 
-      // Store user data from response (backend returns {id, email})
+      if (response.access_token) {
+        setAuthToken(response.access_token);
+      }
+
       if (response.id && response.email) {
         localStorage.setItem('user', JSON.stringify({
           id: response.id,
           email: response.email,
-          username: formData.username,
+          username: response.username || formData.username,
+          phone: response.phone || "",
+          bio: response.bio || "",
+          favorites: Array.isArray(response.favorites) ? response.favorites : [],
         }));
       }
 
-      // Redirect to login page
-      router.push('/login');
+      router.push('/');
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {

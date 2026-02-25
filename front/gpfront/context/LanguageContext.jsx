@@ -154,6 +154,12 @@ export const LanguageProvider = ({ children }) => {
     setLanguage(newLang);
   };
 
+  const setAppLanguage = (nextLanguage) => {
+    if (nextLanguage === 'ar' || nextLanguage === 'en') {
+      setLanguage(nextLanguage);
+    }
+  };
+
   // Automatically update the HTML direction (RTL/LTR) when language changes
   useEffect(() => {
     document.documentElement.lang = language;
@@ -161,7 +167,7 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, t: translations[language] }}>
+    <LanguageContext.Provider value={{ language, toggleLanguage, setAppLanguage, t: translations[language] }}>
       {children}
     </LanguageContext.Provider>
   );

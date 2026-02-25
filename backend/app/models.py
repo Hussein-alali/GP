@@ -13,6 +13,9 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+    phone = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
+    favorites = Column(MutableList.as_mutable(JSONB), nullable=False, default=list)
 
     real_estates = relationship("RealEstate", back_populates="owner")
 
@@ -29,6 +32,7 @@ class RealEstate(Base):
     price = Column(Float, nullable=False)
     description = Column(Text, nullable=True)
     images = Column(MutableList.as_mutable(JSONB), nullable=False, default=list)
+    features = Column(MutableList.as_mutable(JSONB), nullable=False, default=list)
 
     owner_id = Column(Integer, ForeignKey("users.id"))  # ربط باليوزر
     owner = relationship("User", back_populates="real_estates")

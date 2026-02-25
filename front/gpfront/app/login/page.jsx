@@ -33,15 +33,18 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await authAPI.login({
+      const response = await authAPI.login({
         email: formData.email,
         password: formData.password,
       });
 
-      // Store basic user info (email from form since backend doesn't return user object)
       const userInfo = {
-        email: formData.email,
-        // You may want to fetch user details after login
+        id: response.id,
+        username: response.username,
+        email: response.email || formData.email,
+        phone: response.phone || "",
+        bio: response.bio || "",
+        favorites: Array.isArray(response.favorites) ? response.favorites : [],
       };
       localStorage.setItem('user', JSON.stringify(userInfo));
 

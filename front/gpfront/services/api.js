@@ -20,16 +20,21 @@ const setAuthToken = (token) => {
 const removeAuthToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
   }
 };
 
 // Helper function to make API requests
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -124,7 +129,7 @@ export const realEstateAPI = {
   addProperty: async (propertyData) => {
     return apiRequest('/api/real_estate/', {
       method: 'POST',
-      body: JSON.stringify(propertyData),
+      body: propertyData,
     });
   },
 
@@ -132,7 +137,7 @@ export const realEstateAPI = {
   updateProperty: async (propertyId, propertyData) => {
     return apiRequest(`/api/real_estate/${propertyId}`, {
       method: 'PUT',
-      body: JSON.stringify(propertyData),
+      body: propertyData,
     });
   },
 
@@ -158,6 +163,37 @@ export const userAPI = {
   getUserRealEstates: async (userId) => {
     return apiRequest(`/api/user/user/${userId}/realestate`, {
       method: 'GET',
+    });
+  },
+
+  getProfile: async (userId) => {
+    return apiRequest(`/api/user/user/${userId}/profile`, {
+      method: 'GET',
+    });
+  },
+
+  updateProfile: async (userId, profileData) => {
+    return apiRequest(`/api/user/user/${userId}/profile`, {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  getFavorites: async (userId) => {
+    return apiRequest(`/api/user/user/${userId}/favorites`, {
+      method: 'GET',
+    });
+  },
+
+  addFavorite: async (userId, propertyId) => {
+    return apiRequest(`/api/user/user/${userId}/favorites/${propertyId}`, {
+      method: 'POST',
+    });
+  },
+
+  removeFavorite: async (userId, propertyId) => {
+    return apiRequest(`/api/user/user/${userId}/favorites/${propertyId}`, {
+      method: 'DELETE',
     });
   },
 };

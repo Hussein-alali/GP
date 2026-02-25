@@ -48,6 +48,9 @@ def register_user(user_data, db: Session):
         "id": new_user.id,
         "username": new_user.username,
         "email": new_user.email,
+        "phone": new_user.phone,
+        "bio": new_user.bio,
+        "favorites": new_user.favorites or [],
         "access_token": _create_token(new_user),
     }
 
@@ -70,5 +73,8 @@ def login_user(user_data, db: Session):
         "id": user.id,
         "username": user.username,
         "email": user.email,
+        "phone": user.phone,
+        "bio": user.bio,
+        "favorites": user.favorites or [],
         "access_token": _create_token(user),
     }

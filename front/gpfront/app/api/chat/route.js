@@ -11,12 +11,27 @@ function toText(value) {
   return String(value || "").toLowerCase();
 }
 
+function extractTerms(text) {
+  return toText(text)
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 3);
+}
+
 function extractBudget(message) {
   const matches = String(message || "").match(/\d+(?:[.,]\d+)?/g);
   if (!matches || !matches.length) return null;
 
   const budget = Number(matches[matches.length - 1].replace(/,/g, ""));
   return Number.isFinite(budget) ? budget : null;
+}
+
+function extractRecentUserContext(history) {
+  return (Array.isArray(history) ? history : [])
+    .filter((m) => m && m.role === "user" && m.text)
+    .slice(-4)
+    .map((m) => String(m.text))
+    .join(" ");
 }
 
 function isRecommendationRequest(message) {
@@ -39,36 +54,74 @@ function isRecommendationRequest(message) {
   return keywords.some((k) => text.includes(k));
 }
 
-function propertyMatchesMessage(property, message) {
-  const text = toText(message);
-  const propertyText = [property.type, property.location, property.description]
+function propertyTextBlob(property) {
+  return [property.type, property.location, property.description]
     .map(toText)
     .join(" ");
-
-  const budget = extractBudget(message);
-  const budgetMatch = budget == null || Number(property.price) <= budget;
-
-  const directKeywordMatch =
-    !text ||
-    text
-      .split(/\s+/)
-      .filter((w) => w.length > 2)
-      .some((word) => propertyText.includes(word));
-
-  return budgetMatch && directKeywordMatch;
 }
 
-function selectSuggestedProperties(message, properties) {
-  const matched = properties.filter((p) => propertyMatchesMessage(p, message));
-  const source = matched.length ? matched : properties;
+function scorePropertyForIntent(property, userIntentText, budget) {
+  const blob = propertyTextBlob(property);
+  const terms = extractTerms(userIntentText);
 
-  return [...source]
-    .sort((a, b) => Number(a.price || 0) - Number(b.price || 0))
-    .slice(0, 5);
+  let score = 0;
+  for (const term of terms) {
+    if (blob.includes(term)) score += 2;
+  }
+
+  const price = Number(property.price || 0);
+  if (budget != null && Number.isFinite(price)) {
+    if (price <= budget) score += 3;
+    else score -= 3;
+  }
+
+  if (Number.isFinite(price) && price > 0) {
+    score += Math.max(0, 2 - price / 10_000_000);
+  }
+
+  return score;
+}
+
+function selectSuggestedProperties(intentText, properties, budget) {
+  return [...properties]
+    .map((p) => ({ property: p, score: scorePropertyForIntent(p, intentText, budget) }))
+    .sort((a, b) => b.score - a.score || Number(a.property.price || 0) - Number(b.property.price || 0))
+    .slice(0, 5)
+    .map((x) => x.property);
+}
+
+function selectMemoryProperties(intentText, properties, budget) {
+  return [...properties]
+    .map((p) => ({ property: p, score: scorePropertyForIntent(p, intentText, budget) }))
+    .sort((a, b) => b.score - a.score || Number(a.property.price || 0) - Number(b.property.price || 0))
+    .slice(0, 20)
+    .map((x) => x.property);
+}
+
+function buildMemorySummary(intentText, budget, memoryProperties) {
+  const hasBudget = budget != null ? `Budget hint: ${budget}` : "Budget hint: not specified";
+  const typeCounts = {};
+  for (const p of memoryProperties) {
+    const type = String(p.type || "unknown").toLowerCase();
+    typeCounts[type] = (typeCounts[type] || 0) + 1;
+  }
+  const topTypes = Object.entries(typeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([t, c]) => `${t}(${c})`)
+    .join(", ");
+
+  return {
+    user_intent: intentText,
+    budget: budget,
+    budget_note: hasBudget,
+    top_types_in_memory: topTypes || "n/a",
+    memory_count: memoryProperties.length,
+  };
 }
 
 function buildPropertiesSnapshot(properties) {
-  return properties.slice(0, 60).map((p) => ({
+  return properties.map((p) => ({
     id: p.id,
     type: p.type,
     location: p.location,
@@ -77,13 +130,12 @@ function buildPropertiesSnapshot(properties) {
     bedrooms: p.bedrooms,
     bathrooms: p.bathrooms,
     description: p.description || "",
-    images: Array.isArray(p.images) ? p.images : [],
   }));
 }
 
 async function fetchPropertiesFromDb() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/real_estate/`, {
+    const res = await fetch(`${API_BASE_URL}/api/real_estate/?list_images=false`, {
       method: "GET",
       cache: "no-store",
     });
@@ -122,13 +174,18 @@ export async function POST(req) {
     }
 
     const properties = await fetchPropertiesFromDb();
-    const propertiesSnapshot = buildPropertiesSnapshot(properties);
+    const recentUserContext = extractRecentUserContext(history);
+    const intentText = `${recentUserContext} ${String(message)}`.trim();
+    const budget = extractBudget(intentText);
+    const memoryProperties = selectMemoryProperties(intentText, properties, budget);
+    const propertiesSnapshot = buildPropertiesSnapshot(memoryProperties);
+    const memorySummary = buildMemorySummary(intentText, budget, memoryProperties);
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction:
-        "You are a real-estate assistant for SMART ESTATE. Use the provided DB snapshot as source of truth. If no matching property exists, say that clearly. Keep answers concise and practical.",
+        "You are a real-estate assistant for SMART ESTATE. Treat provided DB memory as source of truth. Never invent properties not present in memory. If no property fits, say it clearly and suggest closest options.",
     });
 
     const chat = model.startChat({
@@ -141,18 +198,23 @@ export async function POST(req) {
     });
 
     const contextualPrompt = [
-      "Real-estate database snapshot (JSON):",
+      "DB memory summary (JSON):",
+      JSON.stringify(memorySummary),
+      "",
+      "Real-estate memory records (JSON):",
       JSON.stringify(propertiesSnapshot),
       "",
       "User question:",
       String(message),
+      "",
+      "Response rules: mention concrete property IDs when recommending.",
     ].join("\n");
 
     const result = await chat.sendMessage(contextualPrompt);
     let responseText = result.response.text();
 
     if (isRecommendationRequest(message) && properties.length) {
-      const suggested = selectSuggestedProperties(message, properties);
+      const suggested = selectSuggestedProperties(intentText, properties, budget);
       responseText += buildLinksSection(suggested);
     }
 

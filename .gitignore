@@ -12,3 +12,5 @@ backend/**/*.py[cod]
 # Runtime logs
 *.log
 
+# Environment secrets
+front/gpfront/.env.local

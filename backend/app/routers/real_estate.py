@@ -40,8 +40,8 @@ def serialize_property(prop: RealEstate) -> dict:
     }
 
 
-def serialize_property_list_item(prop: RealEstate) -> dict:
-    first_image = (prop.images or [])[:1]
+def serialize_property_list_item(prop: RealEstate, include_first_image: bool = True) -> dict:
+    first_image = (prop.images or [])[:1] if include_first_image else []
     return {
         "id": prop.id,
         "area": prop.area,
@@ -107,6 +107,7 @@ def get_properties_by_price(
     min_price: float | None = None,
     max_price: float | None = None,
     include_images: bool = False,
+    list_images: bool = True,
     db: Session = Depends(get_db),
 ):
     query = db.query(RealEstate)
@@ -117,7 +118,7 @@ def get_properties_by_price(
     properties = query.all()
     if include_images:
         return [serialize_property(prop) for prop in properties]
-    return [serialize_property_list_item(prop) for prop in properties]
+    return [serialize_property_list_item(prop, include_first_image=list_images) for prop in properties]
 
 
 @router.get("/{property_id}", response_model=UserAddRealEstateResponse)

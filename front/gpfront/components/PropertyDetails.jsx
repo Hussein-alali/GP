@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -15,8 +15,6 @@ const PropertyDetails = ({ property }) => {
   const baths = property.baths ?? property.bathrooms ?? 0;
   const area = property.area ?? 0;
   const type = property.type || "-";
-  const ownerId = property.owner_id ?? "-";
-  const propertyId = property.id ?? "-";
   const description = property.description || (isRTL ? "لا يوجد وصف إضافي." : "No additional description.");
 
   return (
@@ -71,11 +69,9 @@ const PropertyDetails = ({ property }) => {
             <p style={{ color: "#4a5568", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{description}</p>
           </div>
 
-          <div style={{ marginTop: 16, background: "#fff", padding: 20, borderRadius: 14 }}>
+          <div style={{ marginTop: 16, background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)", padding: 22, borderRadius: 16, border: "1px solid #e5edf6", boxShadow: "0 8px 20px rgba(15, 23, 42, 0.06)" }}>
             <h3 style={{ marginBottom: 10 }}>{isRTL ? "كامل البيانات" : "All Property Data"}</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
-              <DataRow label="id" value={propertyId} />
-              <DataRow label="owner_id" value={ownerId} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
               <DataRow label="type" value={type} />
               <DataRow label="location" value={location} />
               <DataRow label="price" value={property.price ?? "-"} />
@@ -114,9 +110,11 @@ function Spec({ label, value }) {
 
 function DataRow({ label, value }) {
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 10 }}>
-      <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{label}</div>
-      <div style={{ fontWeight: 600, color: "#111827", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+    <div style={{ border: "1px solid #dbe8f5", borderRadius: 12, padding: 12, background: "#fff" }}>
+      <div style={{ display: "inline-flex", alignItems: "center", fontSize: "0.72rem", color: "#0b79c7", background: "#eaf6ff", borderRadius: 999, padding: "4px 9px", fontWeight: 700, marginBottom: 8 }}>
+        {label}
+      </div>
+      <div style={{ fontWeight: 700, color: "#0f172a", whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.45 }}>
         {String(value)}
       </div>
     </div>

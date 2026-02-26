@@ -134,6 +134,24 @@ def update_user_profile(
 ):
     user = get_user_with_fallback(db, user_id, authorization)
 
+    if payload.username is not None:
+        username = payload.username.strip()
+        if not username:
+            raise HTTPException(status_code=400, detail="Username cannot be empty")
+        existing_username = db.query(User).filter(User.username == username, User.id != user.id).first()
+        if existing_username:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        user.username = username
+
+    if payload.email is not None:
+        email = payload.email.strip().lower()
+        if not email:
+            raise HTTPException(status_code=400, detail="Email cannot be empty")
+        existing_email = db.query(User).filter(User.email == email, User.id != user.id).first()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        user.email = email
+
     if payload.phone is not None:
         user.phone = payload.phone.strip() or None
     if payload.bio is not None:

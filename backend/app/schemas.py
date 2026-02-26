@@ -62,6 +62,8 @@ class RealEstateUpdate(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     bio: Optional[str] = None
 

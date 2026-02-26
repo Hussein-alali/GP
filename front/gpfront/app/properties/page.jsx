@@ -27,6 +27,30 @@ const PRICE_BARS = [8, 14, 22, 34, 46, 44, 66, 58, 88, 96, 90, 74, 50, 94, 76, 6
 const AREA_BARS = [6, 10, 14, 18, 58, 18, 66, 18, 50, 24, 20, 16, 14, 12, 16, 10, 8];
 const ITEMS_PER_PAGE = 9;
 const MAX_VISIBLE_PAGES = 9;
+const TYPE_ALIASES = {
+  all: "all",
+  apartment: "apartments",
+  apartments: "apartments",
+  "furnished-apartment": "furnished-apartments",
+  "furnished-apartments": "furnished-apartments",
+  villa: "villas",
+  villas: "villas",
+  chalet: "chalets",
+  chalets: "chalets",
+  studio: "studios",
+  studios: "studios",
+  office: "offices",
+  offices: "offices",
+  room: "rooms",
+  rooms: "rooms",
+  duplex: "duplexes",
+  duplexes: "duplexes",
+};
+
+const normalizeTypeKey = (value) => {
+  const key = String(value || "all").trim().toLowerCase();
+  return TYPE_ALIASES[key] || key;
+};
 
 const parseFeaturesParam = (raw) => {
   if (!raw) return [];
@@ -64,12 +88,13 @@ const normalizeProperty = (p) => {
 
 const houseMatchesFilters = (house, filters) => {
   const houseLocation = `${house.location_ar || ""} ${house.location_en || ""} ${house.location || ""}`.toLowerCase();
-  const houseType = (house.type || "").toLowerCase();
+  const houseType = normalizeTypeKey(house.type);
+  const selectedType = normalizeTypeKey(filters.type);
   const selectedFeatures = Array.isArray(filters.features) ? filters.features : [];
   const houseFeatures = Array.isArray(house.features) ? house.features : [];
 
   const matchLocation = !filters.location || houseLocation.includes(String(filters.location).toLowerCase());
-  const matchType = filters.type === "all" || houseType.includes(String(filters.type).toLowerCase());
+  const matchType = selectedType === "all" || houseType === selectedType;
   const matchSearchType = filters.searchType === "all" || (house.searchType || "buy").toLowerCase() === String(filters.searchType).toLowerCase();
   const matchMinPrice = !filters.minPrice || parseFloat(house.price) >= parseFloat(filters.minPrice);
   const matchMaxPrice = !filters.maxPrice || parseFloat(house.price) <= parseFloat(filters.maxPrice);
@@ -99,6 +124,8 @@ const PropertiesContent = () => {
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [topDropdownOpen, setTopDropdownOpen] = useState(null);
+  const [sideDropdownOpen, setSideDropdownOpen] = useState(null);
   const sortMenuRef = useRef(null);
   const t = isRTL
     ? {
@@ -118,9 +145,12 @@ const PropertiesContent = () => {
         type: "النوع",
         allProperties: "كل العقارات",
         apartment: "شقة",
+        furnishedApartment: "شقة مفروشة",
         villa: "فيلا",
         chalet: "شاليه",
-        duplex: "دوبلكس",
+        studio: "استوديو",
+        office: "مكتب",
+        room: "غرفة",
         location: "الموقع",
         locationPlaceholder: "المدينة / الحي",
         maxPrice: "أقصى سعر",
@@ -154,9 +184,12 @@ const PropertiesContent = () => {
         type: "Type",
         allProperties: "All Properties",
         apartment: "Apartment",
+        furnishedApartment: "Furnished Apartment",
         villa: "Villa",
         chalet: "Chalet",
-        duplex: "Duplex",
+        studio: "Studio",
+        office: "Office",
+        room: "Room",
         location: "Location",
         locationPlaceholder: "City / district",
         maxPrice: "Max Price",
@@ -176,7 +209,7 @@ const PropertiesContent = () => {
 
   const [filters, setFilters] = useState({
     location: searchParams.get("location") || "",
-    type: searchParams.get("type") || "all",
+    type: normalizeTypeKey(searchParams.get("type") || "all"),
     searchType: searchParams.get("searchType") || "all",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
@@ -204,6 +237,9 @@ const PropertiesContent = () => {
 
   const handleFilterChange = (name, value) => {
     let processedValue = value;
+    if (name === "type") {
+      processedValue = normalizeTypeKey(value);
+    }
     if ((name === "minPrice" || name === "maxPrice" || name === "minArea" || name === "maxArea") && value !== "") {
       processedValue = Math.max(0, parseFloat(value) || 0).toString();
     }
@@ -215,6 +251,9 @@ const PropertiesContent = () => {
   const handleSidebarFilterChange = (name, value) => {
     const base = sidebarFilters || filters;
     let processedValue = value;
+    if (name === "type") {
+      processedValue = normalizeTypeKey(value);
+    }
     if ((name === "minPrice" || name === "maxPrice" || name === "minArea" || name === "maxArea") && value !== "") {
       processedValue = Math.max(0, parseFloat(value) || 0).toString();
     }
@@ -236,7 +275,43 @@ const PropertiesContent = () => {
         setError("");
         const data = await realEstateAPI.getProperties();
         if (!active) return;
-        setAllHouses(Array.isArray(data) ? data.map(normalizeProperty) : []);
+        const normalized = Array.isArray(data) ? data.map(normalizeProperty) : [];
+
+        const ownerIds = Array.from(
+          new Set(
+            normalized
+              .map((p) => Number(p?.owner_id))
+              .filter((id) => Number.isFinite(id) && id > 0)
+          )
+        );
+
+        if (!ownerIds.length) {
+          setAllHouses(normalized);
+          return;
+        }
+
+        const profileResults = await Promise.allSettled(
+          ownerIds.map((id) => userAPI.getProfile(id))
+        );
+
+        const ownerNameById = new Map();
+        profileResults.forEach((result, idx) => {
+          if (result.status !== "fulfilled") return;
+          const id = ownerIds[idx];
+          const username = result.value?.username;
+          if (username) ownerNameById.set(id, username);
+        });
+
+        const enriched = normalized.map((p) => ({
+          ...p,
+          owner_username:
+            ownerNameById.get(Number(p?.owner_id)) ||
+            p.owner_username ||
+            p.owner_name ||
+            p.owner?.username,
+        }));
+
+        setAllHouses(enriched);
       } catch {
         if (!active) return;
         setError(t.loadFailed);
@@ -285,6 +360,10 @@ const PropertiesContent = () => {
     const handleOutside = (event) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
         setIsSortOpen(false);
+      }
+      if (!event.target.closest(".custom-dropdown-root")) {
+        setTopDropdownOpen(null);
+        setSideDropdownOpen(null);
       }
     };
     document.addEventListener("mousedown", handleOutside);
@@ -381,6 +460,37 @@ const PropertiesContent = () => {
     { value: "area_asc", label: t.areaAsc },
     { value: "area_desc", label: t.areaDesc },
   ];
+  const purposeOptions = [
+    { value: "all", label: t.all },
+    { value: "buy", label: t.forSale },
+    { value: "rent", label: t.forRent },
+  ];
+  const typeOptions = [
+    { value: "all", label: t.allProperties },
+    { value: "apartments", label: t.apartment },
+    { value: "furnished-apartments", label: t.furnishedApartment },
+    { value: "villas", label: t.villa },
+    { value: "chalets", label: t.chalet },
+    { value: "studios", label: t.studio },
+    { value: "offices", label: t.office },
+    { value: "rooms", label: t.room },
+  ];
+  const roomOptions = [
+    { value: "all", label: t.all },
+    { value: "1", label: "1" },
+    { value: "2", label: "2" },
+    { value: "3", label: "3" },
+    { value: "4", label: "4" },
+    { value: "5", label: "5" },
+  ];
+  const bathOptions = [
+    { value: "all", label: t.all },
+    { value: "1", label: "1" },
+    { value: "2", label: "2" },
+    { value: "3", label: "3" },
+    { value: "4", label: "4" },
+    { value: "5", label: "5" },
+  ];
 
   const resetSidebarDraftFilters = () => {
     setSidebarFilters({
@@ -422,17 +532,25 @@ const PropertiesContent = () => {
   const areaMaxPercent = ((areaMaxValue - 10) / (5000 - 10)) * 100;
   const typeTitleEn = {
     all: "Properties",
-    apartment: "Apartments",
-    villa: "Villas",
-    chalet: "Chalets",
-    duplex: "Duplexes",
+    apartments: "Apartments",
+    "furnished-apartments": "Furnished Apartments",
+    villas: "Villas",
+    chalets: "Chalets",
+    studios: "Studios",
+    offices: "Offices",
+    rooms: "Rooms",
+    duplexes: "Duplexes",
   };
   const typeTitleAr = {
     all: "عقارات",
-    apartment: "شقق",
-    villa: "فلل",
-    chalet: "شاليهات",
-    duplex: "دوبلكسات",
+    apartments: "شقق",
+    "furnished-apartments": "شقق مفروشة",
+    villas: "فلل",
+    chalets: "شاليهات",
+    studios: "استوديوهات",
+    offices: "مكاتب",
+    rooms: "غرف",
+    duplexes: "دوبلكسات",
   };
   const selectedTypeTitle = isRTL ? (typeTitleAr[filters.type] || typeTitleAr.all) : (typeTitleEn[filters.type] || typeTitleEn.all);
   const listingTitle =
@@ -447,7 +565,6 @@ const PropertiesContent = () => {
       <div style={container}>
         <section style={topFilterWrap}>
           <div style={topLocationWrap}>
-            <span style={topLocationIcon}>📍</span>
             <input
               value={filters.location}
               onChange={(e) => handleFilterChange("location", e.target.value)}
@@ -456,31 +573,59 @@ const PropertiesContent = () => {
             />
           </div>
           <div style={topRowFilters}>
-            <div style={topSelectWrap}>
-              <select value={filters.searchType} onChange={(e) => handleFilterChange("searchType", e.target.value)} style={topSelectNoNative}>
-                <option value="all">{t.all}</option>
-                <option value="buy">{t.forSale}</option>
-                <option value="rent">{t.forRent}</option>
-              </select>
-              <span style={topSelectArrow}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="6 14 12 8 18 14"></polyline>
-                </svg>
-              </span>
+            <div style={topSelectWrap} className="custom-dropdown-root">
+              <div className={`filter-text-box ${topDropdownOpen === "searchType" ? "active" : ""}`} onClick={() => setTopDropdownOpen((v) => (v === "searchType" ? null : "searchType"))}>
+                <span>{purposeOptions.find((o) => o.value === filters.searchType)?.label || t.all}</span>
+                <span className={`arrow-icon ${topDropdownOpen === "searchType" ? "up" : "down"}`}></span>
+              </div>
+              {topDropdownOpen === "searchType" && (
+                <div className="modern-dropdown-list">
+                  {purposeOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`dropdown-option ${filters.searchType === opt.value ? "selected" : ""}`}
+                      onClick={() => {
+                        handleFilterChange("searchType", opt.value);
+                        setTopDropdownOpen(null);
+                      }}
+                    >
+                      {opt.label}
+                      {filters.searchType === opt.value && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#008ccf" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div style={topSelectWrap}>
-              <select value={filters.type} onChange={(e) => handleFilterChange("type", e.target.value)} style={topSelectNoNative}>
-                <option value="all">{t.allProperties}</option>
-                <option value="apartment">{t.apartment}</option>
-                <option value="villa">{t.villa}</option>
-                <option value="chalet">{t.chalet}</option>
-                <option value="duplex">{t.duplex}</option>
-              </select>
-              <span style={topSelectArrow}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="6 14 12 8 18 14"></polyline>
-                </svg>
-              </span>
+            <div style={topSelectWrap} className="custom-dropdown-root">
+              <div className={`filter-text-box ${topDropdownOpen === "type" ? "active" : ""}`} onClick={() => setTopDropdownOpen((v) => (v === "type" ? null : "type"))}>
+                <span>{typeOptions.find((o) => o.value === filters.type)?.label || t.allProperties}</span>
+                <span className={`arrow-icon ${topDropdownOpen === "type" ? "up" : "down"}`}></span>
+              </div>
+              {topDropdownOpen === "type" && (
+                <div className="modern-dropdown-list">
+                  {typeOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`dropdown-option ${filters.type === opt.value ? "selected" : ""}`}
+                      onClick={() => {
+                        handleFilterChange("type", opt.value);
+                        setTopDropdownOpen(null);
+                      }}
+                    >
+                      {opt.label}
+                      {filters.type === opt.value && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#008ccf" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <input
               type="number"
@@ -564,20 +709,52 @@ const PropertiesContent = () => {
             </div>
 
             <label style={inputLabel}>{t.purpose}</label>
-            <select value={(sidebarFilters || filters).searchType} onChange={(e) => handleSidebarFilterChange("searchType", e.target.value)} style={sideInput}>
-              <option value="all">{t.all}</option>
-              <option value="buy">{t.forSale}</option>
-              <option value="rent">{t.forRent}</option>
-            </select>
+            <div className="custom-dropdown-root" style={{ position: "relative" }}>
+              <div className={`filter-text-box ${sideDropdownOpen === "searchType" ? "active" : ""}`} onClick={() => setSideDropdownOpen((v) => (v === "searchType" ? null : "searchType"))}>
+                <span>{purposeOptions.find((o) => o.value === (sidebarFilters || filters).searchType)?.label || t.all}</span>
+                <span className={`arrow-icon ${sideDropdownOpen === "searchType" ? "up" : "down"}`}></span>
+              </div>
+              {sideDropdownOpen === "searchType" && (
+                <div className="modern-dropdown-list">
+                  {purposeOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`dropdown-option ${(sidebarFilters || filters).searchType === opt.value ? "selected" : ""}`}
+                      onClick={() => {
+                        handleSidebarFilterChange("searchType", opt.value);
+                        setSideDropdownOpen(null);
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <label style={inputLabel}>{t.type}</label>
-            <select value={(sidebarFilters || filters).type} onChange={(e) => handleSidebarFilterChange("type", e.target.value)} style={sideInput}>
-              <option value="all">{t.allProperties}</option>
-              <option value="apartment">{t.apartment}</option>
-              <option value="villa">{t.villa}</option>
-              <option value="chalet">{t.chalet}</option>
-              <option value="duplex">{t.duplex}</option>
-            </select>
+            <div className="custom-dropdown-root" style={{ position: "relative" }}>
+              <div className={`filter-text-box ${sideDropdownOpen === "type" ? "active" : ""}`} onClick={() => setSideDropdownOpen((v) => (v === "type" ? null : "type"))}>
+                <span>{typeOptions.find((o) => o.value === (sidebarFilters || filters).type)?.label || t.allProperties}</span>
+                <span className={`arrow-icon ${sideDropdownOpen === "type" ? "up" : "down"}`}></span>
+              </div>
+              {sideDropdownOpen === "type" && (
+                <div className="modern-dropdown-list">
+                  {typeOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`dropdown-option ${(sidebarFilters || filters).type === opt.value ? "selected" : ""}`}
+                      onClick={() => {
+                        handleSidebarFilterChange("type", opt.value);
+                        setSideDropdownOpen(null);
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <label style={inputLabel}>{t.location}</label>
             <input value={(sidebarFilters || filters).location} onChange={(e) => handleSidebarFilterChange("location", e.target.value)} style={sideInput} placeholder={t.locationPlaceholder} />
@@ -689,16 +866,52 @@ const PropertiesContent = () => {
             </div>
 
             <label style={inputLabel}>{t.rooms}</label>
-            <select value={(sidebarFilters || filters).rooms} onChange={(e) => handleSidebarFilterChange("rooms", e.target.value)} style={sideInput}>
-              <option value="all">{t.all}</option>
-              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <div className="custom-dropdown-root" style={{ position: "relative" }}>
+              <div className={`filter-text-box ${sideDropdownOpen === "rooms" ? "active" : ""}`} onClick={() => setSideDropdownOpen((v) => (v === "rooms" ? null : "rooms"))}>
+                <span>{roomOptions.find((o) => o.value === String((sidebarFilters || filters).rooms))?.label || t.all}</span>
+                <span className={`arrow-icon ${sideDropdownOpen === "rooms" ? "up" : "down"}`}></span>
+              </div>
+              {sideDropdownOpen === "rooms" && (
+                <div className="modern-dropdown-list">
+                  {roomOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`dropdown-option ${String((sidebarFilters || filters).rooms) === opt.value ? "selected" : ""}`}
+                      onClick={() => {
+                        handleSidebarFilterChange("rooms", opt.value);
+                        setSideDropdownOpen(null);
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <label style={inputLabel}>{t.baths}</label>
-            <select value={(sidebarFilters || filters).baths} onChange={(e) => handleSidebarFilterChange("baths", e.target.value)} style={sideInput}>
-              <option value="all">{t.all}</option>
-              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <div className="custom-dropdown-root" style={{ position: "relative" }}>
+              <div className={`filter-text-box ${sideDropdownOpen === "baths" ? "active" : ""}`} onClick={() => setSideDropdownOpen((v) => (v === "baths" ? null : "baths"))}>
+                <span>{bathOptions.find((o) => o.value === String((sidebarFilters || filters).baths))?.label || t.all}</span>
+                <span className={`arrow-icon ${sideDropdownOpen === "baths" ? "up" : "down"}`}></span>
+              </div>
+              {sideDropdownOpen === "baths" && (
+                <div className="modern-dropdown-list">
+                  {bathOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`dropdown-option ${String((sidebarFilters || filters).baths) === opt.value ? "selected" : ""}`}
+                      onClick={() => {
+                        handleSidebarFilterChange("baths", opt.value);
+                        setSideDropdownOpen(null);
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <label style={inputLabel}>{t.features}</label>
             <div style={featureFilterWrap}>
@@ -819,35 +1032,33 @@ const topFilterWrap = {
   marginBottom: "14px",
   display: "grid",
   gap: "10px",
+  borderRadius:"20px"
 };
 const topLocationWrap = { position: "relative" };
-const topLocationIcon = { position: "absolute", top: "50%", transform: "translateY(-50%)", insetInlineStart: "12px", color: "#0b79c7", fontSize: "1rem" };
 const topLocationInput = { width: "100%", border: "1px solid #d1d5db", borderRadius: "12px", padding: "11px 12px 11px 34px", outline: "none", fontSize: "1.02rem" };
 const topRowFilters = { display: "grid", gridTemplateColumns: "repeat(5, minmax(150px, 1fr))", gap: "10px" };
-const topSelectWrap = { position: "relative" };
-const topSelect = { width: "100%", border: "1px solid #d1d5db", borderRadius: "12px", padding: "11px 12px", outline: "none", fontSize: "1rem", background: "#fff", color: "#334155" };
-const topSelectNoNative = { ...topSelect, appearance: "none", WebkitAppearance: "none", MozAppearance: "none", paddingInlineEnd: "38px" };
-const topSelectArrow = { position: "absolute", top: "50%", insetInlineEnd: "12px", transform: "translateY(-50%)", color: "#4b5563", pointerEvents: "none", display: "inline-flex", alignItems: "center" };
+const topSelectWrap = { position: "relative", borderRadius: "14px", background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)", boxShadow: "0 6px 16px rgba(15, 23, 42, 0.06)" };
+const topSelect = { width: "100%", border: "1px solid #cbd5e1", borderRadius: "14px", padding: "12px 14px", outline: "none", fontSize: "0.95rem", fontWeight: 600, background: "transparent", color: "#0f172a", transition: "border-color .2s ease, box-shadow .2s ease" };
 const topMoreBtn = { width: "100%", border: "1px solid #d1d5db", borderRadius: "12px", padding: "11px 12px", outline: "none", fontSize: "1rem", background: "#fff", color: "#334155", cursor: "pointer", fontWeight: 600 };
 const bottomFilterBar = { position: "sticky", bottom: "10px", zIndex: 40, display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" };
 const bottomToggleWrap = { border: "1px solid #cbd5e1", borderRadius: "12px", background: "#e8edf3", padding: "3px", display: "flex", gap: "3px", minWidth: "110px" };
 const bottomToggleBtn = { width: "50px", height: "40px", border: "none", borderRadius: "10px", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "1.05rem", fontWeight: 700 };
 const bottomSortWrap = { position: "relative", width: "260px" };
-const bottomSortTrigger = { width: "100%", height: "46px", border: "1px solid #d1d5db", background: "#fff", borderRadius: "12px", padding: "8px 12px", fontSize: "0.92rem", color: "#0f172a", fontWeight: 500, lineHeight: 1.2, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" };
+const bottomSortTrigger = { width: "100%", height: "46px", border: "1px solid #cbd5e1", background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)", borderRadius: "14px", padding: "8px 12px", fontSize: "0.92rem", color: "#0f172a", fontWeight: 600, lineHeight: 1.2, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", boxShadow: "0 6px 14px rgba(15, 23, 42, 0.06)" };
 const bottomSortLabelWrap = { display: "inline-flex", alignItems: "center", gap: "8px" };
 const bottomSortIcon = { color: "#6b7280", fontSize: "1.05rem", lineHeight: 1 };
 const bottomSortCaret = { color: "#4b5563", display: "inline-flex", alignItems: "center", lineHeight: 1, transition: "transform 0.2s ease" };
-const bottomSortMenu = { position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "#fff", border: "1px solid #d1d5db", borderRadius: "12px", boxShadow: "0 10px 24px rgba(2,6,23,0.1)", zIndex: 1200, padding: "4px 0" };
-const bottomSortItem = { width: "100%", border: "none", background: "#fff", textAlign: "start", padding: "12px 14px", fontSize: "0.95rem", color: "#374151", cursor: "pointer", borderBottom: "1px solid #e5e7eb" };
-const bottomSortItemActive = { color: "#0b79c7", fontWeight: 700 };
+const bottomSortMenu = { position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: "14px", boxShadow: "0 16px 36px rgba(2, 6, 23, 0.14)", zIndex: 1200, padding: "6px" };
+const bottomSortItem = { width: "100%", border: "none", borderRadius: "10px", background: "#fff", textAlign: "start", padding: "11px 12px", fontSize: "0.93rem", color: "#334155", cursor: "pointer", fontWeight: 600 };
+const bottomSortItemActive = { color: "#0369a1", background: "#e0f2fe", fontWeight: 800 };
 const layoutRow = { display: "grid", gridTemplateColumns: "1fr", gap: "16px", alignItems: "start" };
 const sideBackdrop = { position: "fixed", inset: 0, background: "rgba(15,23,42,0.25)", zIndex: 1200 };
-const sideFilter = { position: "fixed", top: "0", insetInlineEnd: 0, width: "min(380px, 95vw)", height: "100vh", overflowY: "auto", overflowX: "hidden", background: "#fff", borderInlineStart: "1px solid #e5e7eb", padding: "18px", display: "grid", gap: "12px", alignContent: "start", zIndex: 1300, boxShadow: "-8px 0 24px rgba(0,0,0,0.12)", boxSizing: "border-box" };
+const sideFilter = { position: "fixed", top: "0", insetInlineEnd: 0, width: "min(400px, 95vw)", height: "100vh", overflowY: "auto", overflowX: "hidden", background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)", borderInlineStart: "1px solid #dbe4ef", padding: "20px", display: "grid", gap: "12px", alignContent: "start", zIndex: 1300, boxShadow: "-12px 0 30px rgba(0,0,0,0.12)", boxSizing: "border-box" };
 const sideHeaderRow = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "2px" };
-const sideTitle = { margin: 0, marginBottom: "4px", fontSize: "1.05rem", color: "#111827" };
+const sideTitle = { margin: 0, marginBottom: "4px", fontSize: "1.12rem", color: "#0f172a", fontWeight: 800 };
 const sideCloseBtn = { border: "1px solid #d1d5db", borderRadius: "8px", background: "#fff", padding: "6px 10px", color: "#334155", cursor: "pointer", fontWeight: 700 };
-const inputLabel = { fontSize: "0.82rem", fontWeight: 700, color: "#475569", marginTop: "8px" };
-const sideInput = { width: "100%", border: "1px solid #d1d5db", borderRadius: "10px", padding: "10px 10px", minHeight: "42px", outline: "none", boxSizing: "border-box" };
+const inputLabel = { fontSize: "0.8rem", fontWeight: 800, color: "#334155", marginTop: "10px", textTransform: "uppercase", letterSpacing: "0.03em" };
+const sideInput = { width: "100%", border: "1px solid #cbd5e1", borderRadius: "12px", padding: "11px 12px", minHeight: "44px", outline: "none", boxSizing: "border-box", background: "#fff", color: "#0f172a", fontWeight: 600, boxShadow: "0 4px 10px rgba(15, 23, 42, 0.04)" };
 const rangeBlock = { display: "grid", gap: "12px", marginTop: "12px", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "12px", background: "#fcfdff" };
 const rangeTitleRow = { display: "flex", alignItems: "center", gap: "8px" };
 const rangeIcon = { fontSize: "0.95rem", color: "#0f172a" };

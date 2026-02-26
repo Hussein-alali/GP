@@ -1,6 +1,8 @@
 # Frontend / Next.js cache
 front/gpfront/.next/
 front/gpfront/.turbo/
+front/gpfront/.cache/
+front/gpfront/.eslintcache
 
 # Node modules
 front/gpfront/node_modules/
@@ -8,6 +10,15 @@ front/gpfront/node_modules/
 # Python cache
 backend/**/__pycache__/
 backend/**/*.py[cod]
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.coverage
+backend/htmlcov/
+
+# OS / editor caches
+.DS_Store
+Thumbs.db
 
 # Runtime logs
 *.log

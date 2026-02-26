@@ -41,6 +41,9 @@ const AddPropertyPage = () => {
   const propertyTypes = [
     { id: 'apartments', ar: 'شقة', en: 'Apartment' },
     { id: 'furnished-apartments', ar: 'شقة مفروشة', en: 'Furnished Apartment' },
+    { id: 'studios', ar: 'استوديو', en: 'Studio' },
+    { id: 'offices', ar: 'مكتب', en: 'Office' },
+    { id: 'rooms', ar: 'غرفة', en: 'Room' },
     { id: 'villas', ar: 'فيلا', en: 'Villa' },
     { id: 'chalets', ar: 'شاليه', en: 'Chalet' },
   ];
@@ -152,9 +155,21 @@ const AddPropertyPage = () => {
       {showSuccessModal && (
         <div style={modalOverlay}>
           <div style={modalBox}>
-            <div style={{ fontSize: '3rem', marginBottom: '15px' }}>OK</div>
-            <h2 style={{ color: '#004d7a', marginBottom: '10px' }}>{isRTL ? 'تم النشر بنجاح!' : 'Published Successfully!'}</h2>
-            <button onClick={() => router.push('/properties')} style={modalBtn}>{isRTL ? 'عرض العقارات' : 'View Properties'}</button>
+            <div style={successIconWrap}>✓</div>
+            <h2 style={modalTitle}>{isRTL ? 'تم نشر العقار بنجاح' : 'Property Published Successfully'}</h2>
+            <p style={modalSubtitle}>
+              {isRTL
+                ? 'إعلانك أصبح الآن متاحًا للمستخدمين ويمكنك متابعته من صفحة العقارات.'
+                : 'Your listing is now live and visible to users. You can view it on the properties page.'}
+            </p>
+            <div style={modalActions}>
+              <button onClick={() => setShowSuccessModal(false)} style={modalGhostBtn}>
+                {isRTL ? 'متابعة التعديل' : 'Continue Editing'}
+              </button>
+              <button onClick={() => router.push('/properties')} style={modalBtn}>
+                {isRTL ? 'عرض العقارات' : 'View Properties'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -290,8 +305,13 @@ const modernDropdownTrigger = { padding: '12px 16px', borderRadius: '10px', bord
 const modernDropdownMenu = { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, border: '1px solid #edf2f7' };
 const modernDropdownOption = { padding: '12px 16px', cursor: 'pointer', transition: '0.2s' };
 const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, backdropFilter: 'blur(5px)' };
-const modalBox = { background: '#fff', padding: '40px', borderRadius: '20px', textAlign: 'center', maxWidth: '400px', width: '90%' };
-const modalBtn = { padding: '12px 30px', background: '#008ccf', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' };
+const modalBox = { background: '#fff', padding: '34px 28px', borderRadius: '22px', textAlign: 'center', maxWidth: '460px', width: '92%', border: '1px solid #e2e8f0', boxShadow: '0 20px 45px rgba(0,0,0,0.18)' };
+const successIconWrap = { width: '68px', height: '68px', borderRadius: '50%', margin: '0 auto 16px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)', color: '#15803d', fontSize: '2rem', fontWeight: 800 };
+const modalTitle = { color: '#0f172a', margin: '0 0 10px 0', fontSize: '1.4rem', fontWeight: 800 };
+const modalSubtitle = { color: '#475569', margin: '0 0 22px 0', lineHeight: 1.6, fontSize: '0.98rem' };
+const modalActions = { display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' };
+const modalBtn = { padding: '11px 22px', background: '#008ccf', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 };
+const modalGhostBtn = { padding: '11px 22px', background: '#fff', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 };
 const formSection = { background: '#ffffff', borderRadius: '16px', padding: '30px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #edf2f7' };
 const sectionTitle = { fontSize: '1.2rem', color: '#004d7a', marginBottom: '25px', borderBottom: '2px solid #f0f4f8', paddingBottom: '10px', fontWeight: '700' };
 const sectionTitleSmall = { fontSize: '1rem', color: '#004d7a', marginBottom: '10px', fontWeight: '600' };

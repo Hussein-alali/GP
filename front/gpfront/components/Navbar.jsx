@@ -13,6 +13,7 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
   const profileWrapRef = useRef(null);
   const langWrapRef = useRef(null);
 
@@ -68,6 +69,50 @@ const Navbar = () => {
     langLabel: language === "ar" ? "AR" : "EN",
   };
 
+  const modernTriggerBase = (isOpen) => ({
+    height: "42px",
+    borderRadius: "14px",
+    border: isOpen ? "1px solid rgba(14, 165, 233, 0.55)" : "1px solid rgba(148, 163, 184, 0.45)",
+    background: isOpen ? "rgba(236, 253, 255, 0.88)" : "rgba(156, 159, 180, 0.92)",
+    boxShadow: isOpen ? "0 10px 24px rgba(14, 165, 233, 0.16)" : "0 6px 18px rgba(15, 23, 42, 0.09)",
+    transition: "all 0.2s ease",
+    backdropFilter: "blur(8px)",
+  });
+
+  const avatarOrb = {
+    width: "26px",
+    height: "26px",
+    borderRadius: "10px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
+    color: "#f8fafc",
+    position: "relative",
+    flex: "0 0 auto",
+  };
+
+  const activeDot = {
+    position: "absolute",
+    width: "7px",
+    height: "7px",
+    borderRadius: "999px",
+    background: "#22c55e",
+    border: "1.5px solid #fff",
+    right: "-2px",
+    bottom: "-2px",
+  };
+
+  const langCodeText = {
+    fontWeight: 800,
+    fontSize: "0.76rem",
+    letterSpacing: "0.04em",
+    color: "#0f172a",
+    lineHeight: 1,
+    minWidth: "26px",
+    textAlign: "center",
+  };
+
   const handleLogout = () => {
     authAPI.logout();
     try {
@@ -83,7 +128,18 @@ const Navbar = () => {
       <div className="market-nav-inner">
         <div className="market-nav-right">
           <Link href="/" className="market-brand" aria-label="Smart Estate">
-            <img src="/RSLOGO2.png" alt="Smart Estate" className="market-brand-logo" />
+            <img
+              src="/RSLOGO2.png"
+              alt="Smart Estate"
+              className="market-brand-logo"
+              onMouseEnter={() => setIsLogoHovered(true)}
+              onMouseLeave={() => setIsLogoHovered(false)}
+              style={{
+                transform: isLogoHovered ? "translateY(-2px) scale(1.04)" : "translateY(0) scale(1)",
+                filter: isLogoHovered ? "drop-shadow(0 10px 18px rgba(2, 132, 199, 0.28)) brightness(1.04)" : "none",
+                transition: "transform 0.2s ease, filter 0.2s ease",
+              }}
+            />
           </Link>
 
           <nav className="market-links">
@@ -111,13 +167,23 @@ const Navbar = () => {
 
         <div className="market-nav-left">
           <div ref={profileWrapRef} className="profile-menu-wrap">
-            <button type="button" className="profile-trigger" onClick={() => setIsProfileMenuOpen((v) => !v)}>
+            <button
+              type="button"
+              className="profile-trigger"
+              style={modernTriggerBase(isProfileMenuOpen)}
+              onClick={() => setIsProfileMenuOpen((v) => !v)}
+              aria-expanded={isProfileMenuOpen}
+              aria-label={labels.profile}
+            >
+              <span style={avatarOrb} aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
+                  <circle cx="12" cy="8" r="3.6"></circle>
+                  <path d="M4.5 19.4c1.9-3.1 4.6-4.5 7.5-4.5s5.6 1.4 7.5 4.5"></path>
+                </svg>
+                <span style={activeDot} />
+              </span>
               <svg className={`profile-caret ${isProfileMenuOpen ? "open" : ""}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="18 15 12 9 6 15"></polyline>
-              </svg>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 20c2-3.5 5-5 8-5s6 1.5 8 5"></path>
               </svg>
             </button>
 
@@ -167,11 +233,24 @@ const Navbar = () => {
           </div>
 
           <div className="lang-menu-wrap" ref={langWrapRef}>
-            <button type="button" className="lang-btn" onClick={() => setIsLangMenuOpen((v) => !v)} aria-expanded={isLangMenuOpen}>
-              <span>{labels.langLabel}</span>
+            <button
+              type="button"
+              className="lang-btn"
+              style={modernTriggerBase(isLangMenuOpen)}
+              onClick={() => setIsLangMenuOpen((v) => !v)}
+              aria-expanded={isLangMenuOpen}
+              aria-label={isRTL ? "اختيار اللغة" : "Language selector"}
+            >
+              <span style={{ ...avatarOrb, borderRadius: "8px" }} aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
+                  <circle cx="12" cy="12" r="8.5"></circle>
+                  <path d="M3.8 12h16.4M12 3.8c2.2 2.4 3.4 5.2 3.4 8.2s-1.2 5.8-3.4 8.2M12 3.8c-2.2 2.4-3.4 5.2-3.4 8.2s1.2 5.8 3.4 8.2"></path>
+                </svg>
+              </span>
+              <span style={langCodeText}>{labels.langLabel}</span>
               <span className={`lang-caret ${isLangMenuOpen ? "open" : ""}`} aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="6 14 12 8 18 14"></polyline>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
               </span>
             </button>

@@ -2,8 +2,105 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
-import { recommendationsAPI } from "@/services/api";
+import { realEstateAPI, recommendationsAPI, userAPI } from "@/services/api";
 import PropertyCard from "@/components/PropertyCard";
+
+const CACHE_TTL_MS = 1000 * 60 * 10;
+
+const toNumber = (v) => {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const normalizeText = (v) => String(v || "").trim().toLowerCase();
+
+const similarityScore = (candidate, favorite) => {
+  let score = 0;
+
+  const cType = normalizeText(candidate.type);
+  const fType = normalizeText(favorite.type);
+  if (cType && fType && cType === fType) score += 35;
+
+  const cLoc = normalizeText(candidate.location || candidate.city);
+  const fLoc = normalizeText(favorite.location || favorite.city);
+  if (cLoc && fLoc) {
+    if (cLoc === fLoc) score += 30;
+    else if (cLoc.includes(fLoc) || fLoc.includes(cLoc)) score += 18;
+  }
+
+  const cRooms = toNumber(candidate.bedrooms ?? candidate.rooms);
+  const fRooms = toNumber(favorite.bedrooms ?? favorite.rooms);
+  const roomDiff = Math.abs(cRooms - fRooms);
+  score += Math.max(0, 18 - roomDiff * 6);
+
+  const cArea = toNumber(candidate.area);
+  const fArea = toNumber(favorite.area);
+  if (cArea > 0 && fArea > 0) {
+    const areaDiffRatio = Math.abs(cArea - fArea) / Math.max(fArea, 1);
+    score += Math.max(0, 15 - areaDiffRatio * 30);
+  }
+
+  const cPrice = toNumber(candidate.price);
+  const fPrice = toNumber(favorite.price);
+  if (cPrice > 0 && fPrice > 0) {
+    const priceDiffRatio = Math.abs(cPrice - fPrice) / Math.max(fPrice, 1);
+    score += Math.max(0, 12 - priceDiffRatio * 18);
+  }
+
+  return score;
+};
+
+const makeCacheKey = (userId) => `recommendation_cache_user_${userId}`;
+
+const readCache = (cacheKey) => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(cacheKey);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (cacheKey, payload) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify(payload));
+  } catch {
+    // ignore localStorage failures
+  }
+};
+
+const enrichWithOwnerNames = async (list) => {
+  const source = Array.isArray(list) ? list : [];
+  const ownerIds = Array.from(
+    new Set(
+      source
+        .map((item) => Number(item?.owner_id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    )
+  );
+
+  if (!ownerIds.length) return source;
+
+  const profileResults = await Promise.allSettled(ownerIds.map((id) => userAPI.getProfile(id)));
+  const ownerNameById = new Map();
+  profileResults.forEach((result, idx) => {
+    if (result.status !== "fulfilled") return;
+    const username = result.value?.username;
+    if (username) ownerNameById.set(ownerIds[idx], username);
+  });
+
+  return source.map((item) => ({
+    ...item,
+    owner_username:
+      ownerNameById.get(Number(item?.owner_id)) ||
+      item?.owner_username ||
+      item?.owner_name ||
+      item?.owner?.username,
+  }));
+};
 
 const Recommendation = () => {
   const { language } = useLanguage();
@@ -35,8 +132,65 @@ const Recommendation = () => {
           }
         }
 
-        const data = await recommendationsAPI.getRecommendations(userId);
-        setItems(data?.recommended_properties || []);
+        const cacheKey = makeCacheKey(userId);
+        const favoriteProperties = await userAPI.getFavorites(userId);
+        const favoritesList = Array.isArray(favoriteProperties) ? favoriteProperties : [];
+        const favoriteIds = favoritesList
+          .map((p) => Number(p?.id))
+          .filter(Boolean)
+          .sort((a, b) => a - b);
+
+        const cached = readCache(cacheKey);
+        const isCacheFresh = cached && Date.now() - Number(cached.updatedAt || 0) <= CACHE_TTL_MS;
+        const sameFavorites =
+          cached &&
+          Array.isArray(cached.favoriteIds) &&
+          cached.favoriteIds.length === favoriteIds.length &&
+          cached.favoriteIds.every((id, idx) => id === favoriteIds[idx]);
+
+        if (isCacheFresh && sameFavorites && Array.isArray(cached.items)) {
+          const enrichedCached = await enrichWithOwnerNames(cached.items);
+          setItems(enrichedCached);
+          return;
+        }
+
+        const allProperties = await realEstateAPI.getProperties();
+        const allList = Array.isArray(allProperties) ? allProperties : [];
+        const favoriteSet = new Set(favoriteIds);
+
+        let computed = [];
+        if (favoritesList.length > 0 && allList.length > 0) {
+          computed = allList
+            .filter((p) => !favoriteSet.has(Number(p?.id)))
+            .map((candidate) => {
+              const bestScore = favoritesList.reduce((best, fav) => {
+                const s = similarityScore(candidate, fav);
+                return s > best ? s : best;
+              }, 0);
+              return { ...candidate, _score: bestScore };
+            })
+            .filter((p) => p._score > 0)
+            .sort((a, b) => b._score - a._score)
+            .slice(0, 12)
+            .map((item) => {
+              const cleaned = { ...item };
+              delete cleaned._score;
+              return cleaned;
+            });
+        }
+
+        if (computed.length === 0) {
+          const data = await recommendationsAPI.getRecommendations(userId);
+          computed = data?.recommended_properties || [];
+        }
+
+        const enriched = await enrichWithOwnerNames(computed);
+        setItems(enriched);
+        writeCache(cacheKey, {
+          updatedAt: Date.now(),
+          favoriteIds,
+          items: enriched,
+        });
       } catch (err) {
         setError(err.message || "Failed to load recommendations.");
       } finally {
@@ -74,8 +228,8 @@ const Recommendation = () => {
       {!loading && !error && items.length === 0 && (
         <p style={{ padding: "0 1.5rem", fontSize: "0.95rem" }}>
           {isRTL
-            ? "لا توجد توصيات حتى الآن. أضف بعض العقارات لبدء التخصيص."
-            : "No recommendations yet. Add some properties to get personalized suggestions."}
+            ? "لا توجد توصيات حتى الآن. أضف بعض العقارات إلى المفضلة لبدء التخصيص."
+            : "No recommendations yet. Add some properties to favorites to start personalization."}
         </p>
       )}
 
@@ -105,6 +259,7 @@ const Recommendation = () => {
                 bedrooms: item?.bedrooms,
                 bathrooms: item?.bathrooms,
                 location: item?.city || item?.location || "",
+                owner_username: item?.owner_username || item?.owner_name || item?.owner?.username,
                 title_en: item?.title || (item?.type ? `${item.type} in ${item.city || item.location || ""}`.trim() : ""),
                 images: Array.isArray(item?.images) ? item.images : [],
                 image_url: item?.image_url,

@@ -32,7 +32,7 @@ class RealEstate(Base):
     price = Column(Float, nullable=False)
     description = Column(Text, nullable=True)
     images = Column(MutableList.as_mutable(JSONB), nullable=False, default=list)
-    features = Column(MutableList.as_mutable(JSONB), nullable=False, default=list)
+    features = Column(MutableList.as_mutable(JSONB), nullable=True, default=list)
 
     owner_id = Column(Integer, ForeignKey("users.id"))  # ربط باليوزر
     owner = relationship("User", back_populates="real_estates")

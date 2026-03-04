@@ -78,8 +78,7 @@ const PropertyDetails = ({ property }) => {
               <DataRow label="area" value={area} />
               <DataRow label="bedrooms" value={rooms} />
               <DataRow label="bathrooms" value={baths} />
-              <DataRow label="description" value={description} />
-              <DataRow label="images_count" value={images.length} />
+              
             </div>
           </div>
         </div>

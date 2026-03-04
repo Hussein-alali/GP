@@ -4,6 +4,42 @@ import React, { useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { useLanguage } from "@/context/LanguageContext";
 
+function renderMessageWithLinks(text) {
+  const value = String(text || "");
+  const lines = value.split("\n");
+  const urlSplitRegex = /(https?:\/\/[^\s]+)/g;
+  const urlMatchRegex = /^https?:\/\/[^\s]+$/;
+
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(urlSplitRegex);
+    return (
+      <React.Fragment key={`line-${lineIndex}`}>
+        {parts.map((part, partIndex) => {
+          if (urlMatchRegex.test(part)) {
+            const cleanUrl = part.replace(/[)\],.;!?]+$/, "");
+            const trailingText = part.slice(cleanUrl.length);
+            return (
+              <React.Fragment key={`part-${lineIndex}-${partIndex}`}>
+                <a
+                  href={cleanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline" }}
+                >
+                  {cleanUrl}
+                </a>
+                {trailingText}
+              </React.Fragment>
+            );
+          }
+          return <React.Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</React.Fragment>;
+        })}
+        {lineIndex < lines.length - 1 ? <br /> : null}
+      </React.Fragment>
+    );
+  });
+}
+
 export default function ChatBotPage() {
   const { language } = useLanguage();
   const isRTL = language === "ar";
@@ -36,10 +72,21 @@ export default function ChatBotPage() {
     setLoading(true);
 
     try {
+      const storedUser =
+        typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("user") || "null")
+          : null;
+      const authToken =
+        typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const userId = Number(storedUser?.id || 0) || null;
+
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: historyForApi }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({ message: text, history: historyForApi, userId }),
       });
 
       const data = await res.json();
@@ -58,7 +105,7 @@ export default function ChatBotPage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f4f7f9" }} dir={isRTL ? "rtl" : "ltr"}>
       <Navbar />
-      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "130px 20px 30px" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 20px 30px" }}>
         <div
           style={{
             background: "#fff",
@@ -87,7 +134,7 @@ export default function ChatBotPage() {
                   color: m.sender === "user" ? "#fff" : "#111827",
                 }}
               >
-                {m.text}
+                {renderMessageWithLinks(m.text)}
               </div>
             ))}
             {loading && <div style={{ color: "#6b7280", fontSize: "14px" }}>{isRTL ? "جاري الكتابة..." : "Typing..."}</div>}

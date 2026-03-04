@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+﻿import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -130,7 +130,67 @@ function buildPropertiesSnapshot(properties) {
     bedrooms: p.bedrooms,
     bathrooms: p.bathrooms,
     description: p.description || "",
+    link: `${FRONT_BASE_URL}/properties/${p.id}`, // Add this line
+    owner_name: p.owner_name || "",
+    owner_phone: p.owner_phone || "",
   }));
+}
+
+async function fetchUserProfileFromDb(userId, authHeader = "") {
+  const id = Number(userId || 0);
+  if (!id) return null;
+
+  try {
+    const headers = {};
+    if (authHeader) {
+      headers.Authorization = authHeader;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/api/user/user/${id}/profile`, {
+      method: "GET",
+      cache: "no-store",
+      headers,
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    return data && typeof data === "object" ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+async function enrichPropertiesWithOwnerContact(properties, authHeader = "") {
+  if (!Array.isArray(properties) || !properties.length) return [];
+
+  const ownerIds = [...new Set(
+    properties
+      .map((p) => Number(p?.owner_id || 0))
+      .filter((id) => Number.isInteger(id) && id > 0)
+  )];
+
+  const ownerEntries = await Promise.all(
+    ownerIds.map(async (ownerId) => {
+      const profile = await fetchUserProfileFromDb(ownerId, authHeader);
+      return [
+        ownerId,
+        {
+          owner_name: profile?.username || "",
+          owner_phone: profile?.phone || "",
+        },
+      ];
+    })
+  );
+
+  const ownerMap = new Map(ownerEntries);
+  return properties.map((p) => {
+    const ownerInfo = ownerMap.get(Number(p?.owner_id || 0)) || {};
+    return {
+      ...p,
+      owner_name: ownerInfo.owner_name || "",
+      owner_phone: ownerInfo.owner_phone || "",
+    };
+  });
 }
 
 async function fetchPropertiesFromDb() {
@@ -152,17 +212,30 @@ async function fetchPropertiesFromDb() {
 function buildLinksSection(suggestedProperties) {
   if (!suggestedProperties.length) return "";
 
-  const lines = suggestedProperties.map(
-    (p) =>
-      `- Property #${p.id} (${p.type || "Property"} - ${p.location || "Unknown"}): ${FRONT_BASE_URL}/properties/${p.id}`
-  );
+  const lines = suggestedProperties.map((p) => {
+    const name = p.owner_name || "Owner";
+    const phone = p.owner_phone || "N/A";
+    const propertyUrl = `${FRONT_BASE_URL}/properties/${p.id}`;
+    
+    // Markdown format: [Visible Text](Actual Link)
+    return `- ${p.type || "Property"} in ${p.location || "Unknown"}: ${propertyUrl} | Contact: ${name} (${phone})`;
+  });
 
-  return `\n\nProperty links:\n${lines.join("\n")}`;
+  return `\n\nSuggested Properties:\n${lines.join("\n")}`;
+}
+
+function normalizeGeneratedLinks(text) {
+  return String(text || "")
+    .replace(/\*\*\((https?:\/\/[^\s)]+)\)\*\*/g, "$1")
+    .replace(/\((https?:\/\/[^\s)]+)\)/g, "$1")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "$2")
+    .replace(/<(https?:\/\/[^\s>]+)>/g, "$1")
+    .replace(/(https?:\/\/[^\s)\],;!?]+)[)\],;!?]+/g, "$1");
 }
 
 export async function POST(req) {
   try {
-    const { message, history = [] } = await req.json();
+    const { message, history = [], userId } = await req.json();
 
     if (!message || !String(message).trim()) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -173,19 +246,28 @@ export async function POST(req) {
       return NextResponse.json({ error: "Gemini API key is not configured" }, { status: 500 });
     }
 
-    const properties = await fetchPropertiesFromDb();
+    const authHeader = String(req.headers.get("authorization") || "");
+    const rawProperties = await fetchPropertiesFromDb();
+    const properties = await enrichPropertiesWithOwnerContact(rawProperties, authHeader);
     const recentUserContext = extractRecentUserContext(history);
     const intentText = `${recentUserContext} ${String(message)}`.trim();
     const budget = extractBudget(intentText);
     const memoryProperties = selectMemoryProperties(intentText, properties, budget);
     const propertiesSnapshot = buildPropertiesSnapshot(memoryProperties);
     const memorySummary = buildMemorySummary(intentText, budget, memoryProperties);
+    const currentUserProfile = await fetchUserProfileFromDb(userId, authHeader);
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
-      systemInstruction:
-        "You are a real-estate assistant for SMART ESTATE. Treat provided DB memory as source of truth. Never invent properties not present in memory. If no property fits, say it clearly and suggest closest options.",
+      systemInstruction: `
+    You are a real-estate assistant for SMART ESTATE. 
+    1. For every property you mention, provide a plain direct URL.
+    2. URL format must be: ${FRONT_BASE_URL}/properties/{id}
+    3. Do not wrap URLs in parentheses, markdown, or angle brackets.
+    3. Treat the provided DB memory as source of truth.
+    4. Never invent properties not present in memory.
+  `,
     });
 
     const chat = model.startChat({
@@ -204,14 +286,28 @@ export async function POST(req) {
       "Real-estate memory records (JSON):",
       JSON.stringify(propertiesSnapshot),
       "",
+      "Current user profile from DB (JSON):",
+      JSON.stringify(
+        currentUserProfile || {
+          id: Number(userId || 0) || null,
+          username: "",
+          phone: "",
+        }
+      ),
+      "",
       "User question:",
       String(message),
       "",
-      "Response rules: mention concrete property IDs when recommending.",
+      "Response rules: do not show property IDs in normal text. When user asks to contact seller, use owner_name and owner_phone from DB memory only. Print links as plain URLs like ${FRONT_BASE_URL}/properties/{id} and never inside parentheses.",
     ].join("\n");
 
     const result = await chat.sendMessage(contextualPrompt);
     let responseText = result.response.text();
+    responseText = responseText
+      .replace(/\bProperty\s*#\s*\d+\b/gi, "Property")
+      .replace(/\(\s*ID\s*:\s*\d+\s*\)/gi, "")
+      .replace(/\bID\s*:\s*\d+\b/gi, "");
+    responseText = normalizeGeneratedLinks(responseText);
 
     if (isRecommendationRequest(message) && properties.length) {
       const suggested = selectSuggestedProperties(intentText, properties, budget);
@@ -226,3 +322,5 @@ export async function POST(req) {
     );
   }
 }
+
+

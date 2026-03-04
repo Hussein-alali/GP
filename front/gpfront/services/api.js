@@ -47,15 +47,32 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const data = contentType.includes('application/json')
+      ? await response.json()
+      : { detail: await response.text() };
 
     if (!response.ok) {
-      throw new Error(data.detail || 'An error occurred');
+      const detail = data?.detail;
+      let message = 'An error occurred';
+
+      if (typeof detail === 'string' && detail.trim()) {
+        message = detail;
+      } else if (Array.isArray(detail) && detail.length) {
+        message = detail
+          .map((item) => item?.msg || item?.message || JSON.stringify(item))
+          .filter(Boolean)
+          .join('; ');
+      } else if (detail && typeof detail === 'object') {
+        message = detail.msg || detail.message || JSON.stringify(detail);
+      }
+
+      throw new Error(message);
     }
 
     return data;
   } catch (error) {
-    console.error('API Error:', error);
+    console.warn('API Error:', error?.message || error);
     throw error;
   }
 };

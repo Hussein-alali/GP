@@ -197,42 +197,15 @@ fav_list2 = r.json() if r.ok else [fav_prop_id]
 fav_ids2 = [p["id"] for p in fav_list2] if fav_list2 and isinstance(fav_list2[0], dict) else fav_list2
 chk("Favorites empty after remove", fav_prop_id not in fav_ids2, "")
 
-# [7] MESSAGING SYSTEM
-print("\n[7] MESSAGING SYSTEM")
-r = post(f"/api/messages/send?sender_id={ahmed_id}",
-         {"receiver_id": sara_id, "content": "Hi Sara, is the apartment still available?"},
-         ahmed_token)
-chk("Send message ahmed->sara", r.status_code in (200,201), f"id={r.json().get('id','?')}" if r.ok else r.text[:80])
-msg_id = r.json().get("id") if r.ok else None
-
-r = post(f"/api/messages/send?sender_id={sara_id}",
-         {"receiver_id": ahmed_id, "content": "Yes, still available! Contact me."},
-         sara_token)
-chk("Send reply sara->ahmed", r.status_code in (200,201), "")
-
-r = get(f"/api/messages/inbox/{ahmed_id}", ahmed_token)
-chk("Get inbox", r.status_code == 200, f"messages={len(r.json()) if r.ok else '?'}")
-chk("Inbox has message", len(r.json() if r.ok else []) >= 1, "")
-
-r = get(f"/api/messages/sent/{ahmed_id}", ahmed_token)
-chk("Get sent messages", r.status_code == 200, f"sent={len(r.json()) if r.ok else '?'}")
-
-r = get(f"/api/messages/conversation/{ahmed_id}/{sara_id}", ahmed_token)
-chk("Get conversation", r.status_code == 200, f"messages={len(r.json()) if r.ok else '?'}")
-chk("Conversation has 2 messages", len(r.json() if r.ok else []) >= 2, "")
-
-r = get(f"/api/messages/unread-count/{sara_id}", sara_token)
-chk("Unread count endpoint", r.status_code == 200, f"unread={r.json().get('unread','?')}" if r.ok else "")
-
-# [8] RECOMMENDATIONS
-print("\n[8] RECOMMENDATIONS")
+# [7] RECOMMENDATIONS
+print("\n[7] RECOMMENDATIONS")
 r = get(f"/api/recommendations/user/{ahmed_id}", ahmed_token)
 chk("Get recommendations", r.status_code == 200, "")
 recs = r.json().get("recommended_properties",[]) if r.ok else []
 chk("Recommendations returned", len(recs) > 0, f"count={len(recs)}")
 
-# [9] PRICE PREDICTION -- VALUATION AGENT
-print("\n[9] PRICE PREDICTION - VALUATION AGENT")
+# [8] PRICE PREDICTION -- VALUATION AGENT
+print("\n[8] PRICE PREDICTION - VALUATION AGENT")
 
 tests = [
     ("New Cairo apartment 3BR 120m2",   {"property_type":"apartments","city":"New Cairo","region":"","area":120,"bedrooms":3,"bathrooms":2}),
@@ -257,8 +230,8 @@ for label, body in tests:
     else:
         fail(f"Valuation: {label}", f"status={r.status_code} {r.text[:60]}")
 
-# [10] ADMIN DASHBOARD
-print("\n[10] ADMIN DASHBOARD")
+# [9] ADMIN DASHBOARD
+print("\n[9] ADMIN DASHBOARD")
 r = get(f"/api/admin/stats?admin_id={admin_id}", admin_token)
 chk("Admin stats", r.status_code == 200, str(r.json()) if r.ok else r.text[:80])
 stats = r.json() if r.ok else {}
@@ -284,16 +257,16 @@ if admin_props:
 r = get(f"/api/admin/stats?admin_id={ahmed_id}", ahmed_token)
 chk("Non-admin blocked from stats", r.status_code == 403, f"status={r.status_code}")
 
-# [11] CHATBOT
-print("\n[11] CHATBOT")
+# [10] CHATBOT
+print("\n[10] CHATBOT")
 r = post("/api/chatbot/chat", {"message":"Show me apartments","user_id": ahmed_id})
 chk("Chatbot responds", r.status_code == 200, f"props={len(r.json().get('properties',[]))}" if r.ok else r.text[:60])
 
 r = post("/api/chatbot/chat", {"message":"I want a villa"})
 chk("Chatbot - villa intent", r.status_code == 200 and len(r.json().get("properties",[])) > 0, "")
 
-# [12] BRAND PROTECTION
-print("\n[12] BRAND PROTECTION")
+# [11] BRAND PROTECTION
+print("\n[11] BRAND PROTECTION")
 r = get("/api/brand/companies")
 chk("Brand - list companies", r.status_code == 200, f"count={len(r.json().get('companies',[]))}" if r.ok else r.text[:80])
 

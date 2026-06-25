@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 import os
 
-from app.routers import auth, real_estate, recommendations, user, messages, admin, chatbot, brand, valuation
+from app.routers import auth, real_estate, recommendations, user, admin, chatbot, brand, valuation
 from app.database import engine
 from app import models
 
@@ -48,7 +48,6 @@ app.include_router(user.router, prefix="/api/user", tags=["User"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(real_estate.router, prefix="/api/real_estate", tags=["Real_Estates"])
 app.include_router(recommendations.router, prefix="/api/recommendations", tags=["Recommendations"])
-app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(chatbot.router, prefix="/api/chatbot", tags=["Chatbot"])
 app.include_router(brand.router, prefix="/api/brand", tags=["Brand Protection"])

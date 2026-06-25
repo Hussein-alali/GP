@@ -19,11 +19,22 @@ const PropertyDetails = ({ property }) => {
 
   const statusColors = {
     available: { bg: "#f0fdf4", color: "#15803d", label: isRTL ? "متاح" : "Available" },
-    sold: { bg: "#fef2f2", color: "#dc2626", label: isRTL ? "مباع" : "Sold" },
-    rented: { bg: "#fef9c3", color: "#92400e", label: isRTL ? "مؤجر" : "Rented" },
+    sold:      { bg: "#fef2f2", color: "#dc2626", label: isRTL ? "مباع" : "Sold" },
+    rented:    { bg: "#fef9c3", color: "#92400e", label: isRTL ? "مؤجر" : "Rented" },
   };
   const statusInfo = statusColors[property.status] || statusColors.available;
   const mapQuery = encodeURIComponent(location || "Egypt");
+
+  // WhatsApp: strip non-digits, prepend Egypt code if local number
+  const rawPhone = property.owner_phone || "";
+  const waNumber = rawPhone.replace(/\D/g, "").replace(/^0/, "20");
+  const waMessage = encodeURIComponent(
+    isRTL
+      ? `مرحباً، أنا مهتم بالعقار رقم ${property.id} في ${location}`
+      : `Hi, I'm interested in property #${property.id} in ${location}`
+  );
+  const waLink = waNumber ? `https://wa.me/${waNumber}?text=${waMessage}` : null;
+  const callLink = rawPhone ? `tel:${rawPhone}` : null;
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }} dir={isRTL ? "rtl" : "ltr"}>
@@ -103,26 +114,37 @@ const PropertyDetails = ({ property }) => {
               {Number(property.price || 0).toLocaleString()} {isRTL ? "ج.م" : "EGP"}
             </h2>
           </div>
-          <button style={btnPrimary}>{isRTL ? "اتصل الآن" : "Call Now"}</button>
-          <button style={btnSecondary}>{isRTL ? "واتساب" : "WhatsApp"}</button>
-          <a
-            href="/messages"
-            style={{
-              display: "block",
-              width: "100%",
-              padding: 12,
-              borderRadius: 10,
-              border: "2px solid #004d7a",
-              background: "transparent",
-              color: "#004d7a",
-              fontWeight: 700,
-              textAlign: "center",
-              textDecoration: "none",
-              boxSizing: "border-box",
-            }}
-          >
-            {isRTL ? "مراسلة المالك" : "Message Owner"}
-          </a>
+          {property.owner_name && (
+            <p style={{ textAlign: "center", color: "#475569", fontSize: "0.88rem", marginBottom: 14 }}>
+              {isRTL ? "المالك:" : "Owner:"} <strong>{property.owner_name}</strong>
+            </p>
+          )}
+
+          {callLink ? (
+            <a href={callLink} style={{ ...btnPrimary, display: "block", textDecoration: "none", textAlign: "center" }}>
+              📞 {isRTL ? "اتصل الآن" : "Call Now"}
+            </a>
+          ) : (
+            <button style={{ ...btnPrimary, opacity: 0.4, cursor: "default" }} disabled>
+              📞 {isRTL ? "رقم غير متاح" : "No phone listed"}
+            </button>
+          )}
+
+          {waLink ? (
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...btnSecondary, display: "block", textDecoration: "none", textAlign: "center", marginTop: 10 }}
+            >
+              <span style={{ marginInlineEnd: 6 }}>💬</span>
+              {isRTL ? "واتساب" : "WhatsApp"}
+            </a>
+          ) : (
+            <button style={{ ...btnSecondary, opacity: 0.4, cursor: "default", marginTop: 10 }} disabled>
+              💬 {isRTL ? "واتساب غير متاح" : "WhatsApp unavailable"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -177,8 +199,8 @@ const btnPrimary = {
   background: "#008ccf",
   color: "#fff",
   fontWeight: 700,
-  marginBottom: 10,
   cursor: "pointer",
+  boxSizing: "border-box",
 };
 const btnSecondary = {
   width: "100%",
@@ -189,6 +211,7 @@ const btnSecondary = {
   color: "#25d366",
   fontWeight: 700,
   cursor: "pointer",
+  boxSizing: "border-box",
 };
 
 export default PropertyDetails;

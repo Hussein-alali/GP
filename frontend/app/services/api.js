@@ -235,28 +235,6 @@ export const valuationAPI = {
   },
 };
 
-// Messages API
-export const messagesAPI = {
-  getInbox: async (userId) => {
-    return apiRequest(`/api/messages/inbox/${userId}`, { method: 'GET' });
-  },
-  getSent: async (userId) => {
-    return apiRequest(`/api/messages/sent/${userId}`, { method: 'GET' });
-  },
-  sendMessage: async (senderId, data) => {
-    return apiRequest(`/api/messages/send?sender_id=${senderId}`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-  getConversation: async (userA, userB) => {
-    return apiRequest(`/api/messages/conversation/${userA}/${userB}`, { method: 'GET' });
-  },
-  getUnreadCount: async (userId) => {
-    return apiRequest(`/api/messages/unread-count/${userId}`, { method: 'GET' });
-  },
-};
-
 // Admin API
 export const adminAPI = {
   getStats: async (adminId) => {

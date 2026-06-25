@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, RealEstate, Message
+from app.models import User, RealEstate
 
 router = APIRouter()
 
@@ -21,14 +21,12 @@ def get_stats(admin_id: int, db: Session = Depends(get_db)):
     available = db.query(RealEstate).filter(RealEstate.status == "available").count()
     sold = db.query(RealEstate).filter(RealEstate.status == "sold").count()
     rented = db.query(RealEstate).filter(RealEstate.status == "rented").count()
-    total_messages = db.query(Message).count()
     return {
         "total_users": total_users,
         "total_properties": total_properties,
         "available_properties": available,
         "sold_properties": sold,
         "rented_properties": rented,
-        "total_messages": total_messages,
     }
 
 

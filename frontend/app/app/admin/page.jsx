@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useLanguage } from "@/context/LanguageContext";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
 
 async function apiFetch(endpoint, options = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
@@ -155,10 +155,6 @@ export default function AdminPage() {
                 <div style={cardStyle("#8b5cf6")}>
                   <div style={{ fontSize: "2rem", fontWeight: 900, color: "#4c1d95" }}>{stats.rented_properties}</div>
                   <div style={{ color: "#6b7280", fontSize: "0.85rem", marginTop: 4 }}>{isRTL ? "مؤجر" : "Rented"}</div>
-                </div>
-                <div style={cardStyle("#ec4899")}>
-                  <div style={{ fontSize: "2rem", fontWeight: 900, color: "#831843" }}>{stats.total_messages}</div>
-                  <div style={{ color: "#6b7280", fontSize: "0.85rem", marginTop: 4 }}>{isRTL ? "رسائل" : "Messages"}</div>
                 </div>
               </div>
             )}

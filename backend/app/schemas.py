@@ -48,6 +48,8 @@ class UserAddRealEstateResponse(BaseModel):
     features: List[str] = Field(default_factory=list)
     status: str = "available"
     owner_id: Optional[int] = None
+    owner_phone: Optional[str] = None
+    owner_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

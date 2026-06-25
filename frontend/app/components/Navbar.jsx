@@ -56,15 +56,25 @@ const Navbar = () => {
     return null;
   }
 
+  const [userRole, setUserRole] = useState("user");
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) setUserRole(JSON.parse(stored)?.role ?? "user");
+    } catch {}
+  }, [isLoggedIn]);
+
   const labels = {
     search: isRTL ? "ابحث" : "Search",
     know: isRTL ? "اعرف" : "Explore",
     announce: isRTL ? "اعلن" : "Advertise",
+    valuation: isRTL ? "تقييم السعر" : "Price Valuation",
     addProperty: isRTL ? "إضافة عقار" : "Add Property",
     login: isRTL ? "تسجيل الدخول" : "Login",
     register: isRTL ? "تسجيل حساب" : "Register",
     profile: isRTL ? "الملف الشخصي" : "Profile",
     favorites: isRTL ? "مفضلاتي" : "Favorites",
+    admin: isRTL ? "لوحة الإدارة" : "Admin Panel",
     logout: isRTL ? "تسجيل الخروج" : "Logout",
     langLabel: language === "ar" ? "AR" : "EN",
   };
@@ -162,6 +172,12 @@ const Navbar = () => {
               </svg>
               {labels.announce}
             </Link>
+            <Link href="/price-prediction" className="market-link-item">
+              <svg className="market-link-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              {labels.valuation}
+            </Link>
           </nav>
         </div>
 
@@ -222,6 +238,11 @@ const Navbar = () => {
                       <Link href="/profile#favorites" className="menu-secondary" onClick={() => setIsProfileMenuOpen(false)}>
                         {labels.favorites}
                       </Link>
+                      {userRole === "admin" && (
+                        <Link href="/admin" className="menu-secondary" onClick={() => setIsProfileMenuOpen(false)}>
+                          {labels.admin}
+                        </Link>
+                      )}
                       <button type="button" className="menu-secondary" onClick={handleLogout}>
                         {labels.logout}
                       </button>

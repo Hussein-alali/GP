@@ -31,6 +31,15 @@ class ComparableProperty(BaseModel):
     similarity_score: float
 
 
+class PopularListing(BaseModel):
+    price: float
+    area: float
+    bedrooms: int
+    bathrooms: int
+    title: str
+    url: str
+
+
 class ValuationResponse(BaseModel):
     min_price: float
     expected_price: float
@@ -39,6 +48,7 @@ class ValuationResponse(BaseModel):
     comparables_used: int
     outliers_removed: int
     comparable_properties: List[ComparableProperty]
+    popular_in_area: List[PopularListing] = []
 
 
 @router.post("/estimate", response_model=ValuationResponse)

@@ -1,8 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useLanguage } from "@/context/LanguageContext";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
 
 const PROPERTY_TYPES = [
   { id: "apartments",           ar: "شقة",           en: "Apartment" },
@@ -44,21 +47,69 @@ export default function PricePrediction() {
     furnished: false,
     level: "0",
   });
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState("");
+  const [result, setResult]       = useState(null);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
   const [showComps, setShowComps] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const valTimerRef = useRef(null);
+
+  // Called when user clicks the map — fills city field with reverse-geocoded city name
+  const handleMapSelect = useCallback(({ city, address }) => {
+    set("city", city || address);
+  }, []);
+
+  // Auto-estimate whenever any key field changes (same pattern as add-property)
+  useEffect(() => {
+    const { property_type, city, area, bedrooms, bathrooms } = form;
+    if (!area || !bedrooms || !bathrooms || !city) {
+      clearTimeout(valTimerRef.current);
+      setResult(null);
+      setLoading(false);
+      return;
+    }
+    setResult(null);
+    setLoading(true);
+    clearTimeout(valTimerRef.current);
+    valTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/valuation/estimate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            property_type,
+            city,
+            region: form.region,
+            area: parseFloat(area),
+            bedrooms: parseInt(bedrooms),
+            bathrooms: parseInt(bathrooms),
+            furnished: form.furnished,
+            level: parseInt(form.level) || 0,
+          }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        setResult(await res.json());
+        setShowComps(false);
+      } catch (err) {
+        setError(err.message || (isRTL ? "حدث خطأ." : "An error occurred."));
+      } finally {
+        setLoading(false);
+      }
+    }, 800);
+    return () => clearTimeout(valTimerRef.current);
+  }, [form.property_type, form.city, form.area, form.bedrooms, form.bathrooms, form.region, form.furnished, form.level]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); setResult(null);
     const { property_type, city, area, bedrooms, bathrooms } = form;
     if (!area || !bedrooms || !bathrooms || !city || !property_type) {
       setError(isRTL ? "يرجى ملء جميع الحقول المطلوبة." : "Please fill in all required fields.");
       return;
     }
+    // result already showing from auto-estimate; button now just forces a fresh fetch
+    setError("");
+    setResult(null);
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/valuation/estimate`, {
@@ -181,6 +232,23 @@ export default function PricePrediction() {
         </form>
       </div>
 
+      {/* Map */}
+      <div style={{ background: "#fff", borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", marginBottom: 24 }}>
+        <div style={{ padding: "14px 20px", borderBottom: "1px solid #e5edf6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontWeight: 700, color: "#004d7a", fontSize: "0.97rem" }}>
+            📍 {isRTL ? "حدد الموقع على الخريطة" : "Pin Location on Map"}
+          </span>
+          {form.city && (
+            <span style={{ fontSize: "0.82rem", color: "#6b7280" }}>
+              {form.city}
+            </span>
+          )}
+        </div>
+        <div style={{ padding: 16 }}>
+          <MapPicker onSelect={handleMapSelect} isRTL={isRTL} />
+        </div>
+      </div>
+
       {/* Result */}
       {result && (
         <>
@@ -223,6 +291,7 @@ export default function PricePrediction() {
                   : "⚠️ No comparables found in DB. Estimate is based on market averages."}
               </div>
             )}
+
           </div>
 
           {/* Comparable properties table */}
@@ -268,6 +337,37 @@ export default function PricePrediction() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Popular listings in same area from Aqarmap */}
+          {result.popular_in_area?.length > 0 && (
+            <div style={{ background: "#fff", borderRadius: 18, boxShadow: "0 4px 20px rgba(0,0,0,0.08)", overflow: "hidden", marginTop: 4 }}>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5edf6", fontWeight: 700, color: "#004d7a", fontSize: "0.97rem", display: "flex", alignItems: "center", gap: 8 }}>
+                🔍 {isRTL ? `أبرز العقارات المدرجة في ${form.city}` : `Top Listings in ${form.city}`}
+                <span style={{ fontSize: "0.72rem", background: "#eaf6ff", color: "#0369a1", borderRadius: 999, padding: "2px 8px", fontWeight: 600 }}>Aqarmap</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 0 }}>
+                {result.popular_in_area.map((listing, i) => (
+                  <a
+                    key={i}
+                    href={listing.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "block", padding: "14px 18px", borderBottom: "1px solid #f0f4f8", borderRight: "1px solid #f0f4f8", textDecoration: "none", transition: "background 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div style={{ fontWeight: 800, color: "#004d7a", fontSize: "1rem", marginBottom: 4 }}>
+                      {Number(listing.price).toLocaleString()} <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#6b7280" }}>{isRTL ? "ج.م" : "EGP"}</span>
+                    </div>
+                    <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                      {listing.area} m² · {listing.bedrooms} {isRTL ? "غرف" : "BR"} · {listing.bathrooms} {isRTL ? "حمام" : "Bath"}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "#9ca3af", marginTop: 3 }}>{listing.title}</div>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </>

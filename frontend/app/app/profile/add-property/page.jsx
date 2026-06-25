@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI, brandAPI, realEstateAPI, valuationAPI } from '@/services/api';
 import { useLanguage } from '@/context/LanguageContext';
 
-const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 // ─── Brand Protection Result Card ────────────────────────────────────────────
 function BrandResult({ result, isRTL }) {
@@ -94,6 +94,30 @@ function ValuationWidget({ data, loading, isRTL }) {
           ? `استناداً إلى ${data.comparables_used} عقار مشابه` + (data.outliers_removed ? ` (تم إزالة ${data.outliers_removed} قيمة شاذة)` : '')
           : `Based on ${data.comparables_used} comparable properties` + (data.outliers_removed ? ` (${data.outliers_removed} outlier${data.outliers_removed > 1 ? 's' : ''} removed)` : '')}
       </div>
+
+      {data.popular_in_area?.length > 0 && (
+        <div style={{ marginTop: 14, borderTop: '1px solid #bae6fd', paddingTop: 12 }}>
+          <div style={{ fontSize: '0.72rem', color: '#0369a1', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            🔍 {isRTL ? 'عقارات مدرجة في نفس المنطقة' : 'Listed in Same Area'}
+          </div>
+          {data.popular_in_area.map((listing, i) => (
+            <a
+              key={i}
+              href={listing.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < data.popular_in_area.length - 1 ? '1px solid #e0f2fe' : 'none', textDecoration: 'none' }}
+            >
+              <div style={{ fontSize: '0.8rem', color: '#0c4a6e' }}>
+                {listing.area} m² · {listing.bedrooms} {isRTL ? 'غرف' : 'BR'}
+              </div>
+              <div style={{ fontWeight: 700, color: '#0369a1', fontSize: '0.85rem' }}>
+                {Number(listing.price).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -252,13 +276,13 @@ const AddPropertyPage = () => {
   };
 
   // ── Map ───────────────────────────────────────────────────────────────────
-  const handleMapSelect = useCallback(async ({ lat, lng, address }) => {
+  const handleMapSelect = useCallback(({ lat, lng, address, city }) => {
     setApartment((prev) => ({
       ...prev,
       latitude: lat,
       longitude: lng,
       location_ar: address,
-      location_en: address,
+      location_en: city || address,  // short city name for valuation matching
     }));
   }, []);
 

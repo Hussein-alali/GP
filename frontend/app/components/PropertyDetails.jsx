@@ -17,6 +17,14 @@ const PropertyDetails = ({ property }) => {
   const type = property.type || "-";
   const description = property.description || (isRTL ? "لا يوجد وصف إضافي." : "No additional description.");
 
+  const statusColors = {
+    available: { bg: "#f0fdf4", color: "#15803d", label: isRTL ? "متاح" : "Available" },
+    sold: { bg: "#fef2f2", color: "#dc2626", label: isRTL ? "مباع" : "Sold" },
+    rented: { bg: "#fef9c3", color: "#92400e", label: isRTL ? "مؤجر" : "Rented" },
+  };
+  const statusInfo = statusColors[property.status] || statusColors.available;
+  const mapQuery = encodeURIComponent(location || "Egypt");
+
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }} dir={isRTL ? "rtl" : "ltr"}>
       <div style={{ marginBottom: 30 }}>
@@ -54,7 +62,12 @@ const PropertyDetails = ({ property }) => {
 
       <div style={{ display: "flex", gap: 30, flexWrap: "wrap" }}>
         <div style={{ flex: 2, minWidth: 350 }}>
-          <h1 style={{ fontSize: "2.1rem", color: "#004d7a", marginBottom: 10 }}>{title}</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <h1 style={{ fontSize: "2.1rem", color: "#004d7a", margin: 0 }}>{title}</h1>
+            <span style={{ padding: "4px 12px", borderRadius: 999, fontWeight: 700, fontSize: "0.82rem", background: statusInfo.bg, color: statusInfo.color }}>
+              {statusInfo.label}
+            </span>
+          </div>
           <p style={{ color: "#666" }}>{location}</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 20, marginTop: 24 }}>
@@ -92,6 +105,42 @@ const PropertyDetails = ({ property }) => {
           </div>
           <button style={btnPrimary}>{isRTL ? "اتصل الآن" : "Call Now"}</button>
           <button style={btnSecondary}>{isRTL ? "واتساب" : "WhatsApp"}</button>
+          <a
+            href="/messages"
+            style={{
+              display: "block",
+              width: "100%",
+              padding: 12,
+              borderRadius: 10,
+              border: "2px solid #004d7a",
+              background: "transparent",
+              color: "#004d7a",
+              fontWeight: 700,
+              textAlign: "center",
+              textDecoration: "none",
+              boxSizing: "border-box",
+            }}
+          >
+            {isRTL ? "مراسلة المالك" : "Message Owner"}
+          </a>
+        </div>
+      </div>
+
+      {/* Map Section */}
+      <div style={{ marginTop: 30, background: "#fff", borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5edf6", fontWeight: 700, color: "#004d7a", fontSize: "1.05rem" }}>
+          {isRTL ? "موقع العقار على الخريطة" : "Property Location on Map"}
+        </div>
+        <iframe
+          title="property-map"
+          width="100%"
+          height="350"
+          style={{ border: 0, display: "block" }}
+          loading="lazy"
+          src={`https://www.openstreetmap.org/export/embed.html?bbox=28,22,36,31&layer=mapnik&marker=30,31&mlat=30&mlon=31`}
+        />
+        <div style={{ padding: "10px 20px", fontSize: "0.83rem", color: "#9ca3af" }}>
+          {isRTL ? `الموقع: ${location}` : `Location: ${location}`}
         </div>
       </div>
     </div>

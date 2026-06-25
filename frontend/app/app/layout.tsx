@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import ChatIcon from "@/components/ChatIcon";
 import './globals.css';
-import { LanguageProvider } from '@/context/LanguageContext'; // Import the provider
+import { LanguageProvider } from '@/context/LanguageContext';
 import Footer from '@/components/Footer';
+import ChatBot from '@/components/ChatBot';
 
 type Props = {
   children: ReactNode;
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: Props) {
       <body>
         <LanguageProvider>
           {children}
-          <ChatIcon />
+          <ChatBot />
           <Footer />
         </LanguageProvider>
       </body>

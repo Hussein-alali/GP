@@ -6,8 +6,11 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import RealEstate
+from app.models import RealEstate, User
 from app.schemas import UserAddRealEstateResponse
+from app.services.brand_protection import BrandProtectionService
+
+_brand = BrandProtectionService()
 
 router = APIRouter()
 
@@ -72,6 +75,15 @@ async def add_property(
     files: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
+    # Brand protection: read first image bytes, run check, then reset stream
+    first_bytes = files[0].file.read()
+    files[0].file.seek(0)
+    user = db.query(User).filter(User.id == owner_id).first()
+    user_email = user.email if user else ""
+    brand_check = _brand.check_owner(first_bytes, user_email)
+    if brand_check["blocked"]:
+        raise HTTPException(status_code=403, detail=brand_check["reason"])
+
     images = encode_uploaded_images(files)
     if not images:
         raise HTTPException(status_code=400, detail="At least one image is required")

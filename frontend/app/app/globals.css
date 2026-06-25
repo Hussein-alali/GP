@@ -2095,3 +2095,7 @@ html[dir="ltr"] .profile-menu-panel {
     padding: 0 14px;
   }
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

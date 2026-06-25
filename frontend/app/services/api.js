@@ -225,14 +225,84 @@ export const recommendationsAPI = {
   },
 };
 
-// Prediction API
-export const predictionAPI = {
-  // Predict property price
-  predictPrice: async (data) => {
-    return apiRequest('/api/predict/price', {
+// Valuation API (replaces old prediction)
+export const valuationAPI = {
+  estimate: async (data) => {
+    return apiRequest('/api/valuation/estimate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+};
+
+// Messages API
+export const messagesAPI = {
+  getInbox: async (userId) => {
+    return apiRequest(`/api/messages/inbox/${userId}`, { method: 'GET' });
+  },
+  getSent: async (userId) => {
+    return apiRequest(`/api/messages/sent/${userId}`, { method: 'GET' });
+  },
+  sendMessage: async (senderId, data) => {
+    return apiRequest(`/api/messages/send?sender_id=${senderId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  getConversation: async (userA, userB) => {
+    return apiRequest(`/api/messages/conversation/${userA}/${userB}`, { method: 'GET' });
+  },
+  getUnreadCount: async (userId) => {
+    return apiRequest(`/api/messages/unread-count/${userId}`, { method: 'GET' });
+  },
+};
+
+// Admin API
+export const adminAPI = {
+  getStats: async (adminId) => {
+    return apiRequest(`/api/admin/stats?admin_id=${adminId}`, { method: 'GET' });
+  },
+  listUsers: async (adminId) => {
+    return apiRequest(`/api/admin/users?admin_id=${adminId}`, { method: 'GET' });
+  },
+  updateUserRole: async (adminId, userId, role) => {
+    return apiRequest(`/api/admin/users/${userId}/role?role=${role}&admin_id=${adminId}`, { method: 'PUT' });
+  },
+  listProperties: async (adminId) => {
+    return apiRequest(`/api/admin/properties?admin_id=${adminId}`, { method: 'GET' });
+  },
+  updatePropertyStatus: async (adminId, propertyId, status) => {
+    return apiRequest(`/api/admin/properties/${propertyId}/status?status=${status}&admin_id=${adminId}`, { method: 'PUT' });
+  },
+  deleteProperty: async (adminId, propertyId) => {
+    return apiRequest(`/api/admin/properties/${propertyId}?admin_id=${adminId}`, { method: 'DELETE' });
+  },
+};
+
+// Brand Protection API
+export const brandAPI = {
+  detect: async (imageFile) => {
+    const form = new FormData();
+    form.append('image', imageFile);
+    return apiRequest('/api/brand/detect', { method: 'POST', body: form });
+  },
+
+  validate: async (imageFile, companyName) => {
+    const form = new FormData();
+    form.append('image', imageFile);
+    form.append('company_name', companyName);
+    return apiRequest('/api/brand/validate', { method: 'POST', body: form });
+  },
+
+  checkOwner: async (imageFile, userEmail) => {
+    const form = new FormData();
+    form.append('image', imageFile);
+    form.append('user_email', userEmail);
+    return apiRequest('/api/brand/check-owner', { method: 'POST', body: form });
+  },
+
+  listCompanies: async () => {
+    return apiRequest('/api/brand/companies', { method: 'GET' });
   },
 };
 

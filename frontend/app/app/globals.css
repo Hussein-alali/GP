@@ -6,6 +6,16 @@
   --text-white: #ffffff;
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -92,17 +102,18 @@ body {
   color: white;
   padding: 14px 40px;
   border: none;
+  border-radius: 50px;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .hero-btn:hover {
-  background-color: transparent;
-  color: #008ccf;
-  transform: translateY(-3px); /* Subtle lift */
-  box-shadow: 0 10px 20px rgba(0, 140, 207, 0.3); /* Soft glow */
+  background-color: #008ccf;
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 140, 207, 0.35);
 }
 
 .hero-btn:active {

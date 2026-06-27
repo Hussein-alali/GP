@@ -83,14 +83,19 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit}>
             {error && (
-              <div style={{ 
-                padding: '12px', 
-                marginBottom: '20px', 
-                backgroundColor: '#fee', 
-                color: '#c33', 
+              <div style={{
+                padding: '12px',
+                marginBottom: '20px',
+                backgroundColor: '#fef2f2',
+                color: '#dc2626',
                 borderRadius: '8px',
-                fontSize: '14px'
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: '1px solid #fecaca',
               }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 {error}
               </div>
             )}
@@ -142,7 +147,12 @@ const LoginPage = () => {
               <Link href="/forgot-password" className="forgot-password">Forgot Password?</Link>
             </div>
 
-            <button type="submit" className="login-submit-btn" disabled={loading}>
+            <button type="submit" className="login-submit-btn" disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {loading && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 0.8s linear infinite' }}>
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              )}
               {loading ? 'Logging in...' : 'Login'}
             </button>
 

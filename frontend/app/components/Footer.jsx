@@ -81,13 +81,28 @@ const Footer = () => {
         
         {/* Section 1: Social Icons (Your specific links) */}
         <div style={styles.socialIcons}>
-          <a href="https://www.facebook.com/?locale=ar_AR" style={styles.icon} aria-label="Facebook" target="_blank" rel="noopener noreferrer"><FaFacebookF /></a>
-          <a href="https://www.linkedin.com/login/ar" style={styles.icon} aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><FaLinkedinIn /></a>
-          <a href="https://x.com/?lang=ar" style={styles.icon} aria-label="X" target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
-          <a href="https://www.snapchat.com/" style={styles.icon} aria-label="Snapchat" target="_blank" rel="noopener noreferrer"><FaSnapchatGhost /></a>
-          <a href="https://www.tiktok.com/login" style={styles.icon} aria-label="TikTok" target="_blank" rel="noopener noreferrer"><FaTiktok /></a>
-          <a href="https://www.instagram.com/" style={styles.icon} aria-label="Instagram" target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
-          <a href="https://www.youtube.com/" style={styles.icon} aria-label="YouTube" target="_blank" rel="noopener noreferrer"><FaYoutube /></a>
+          {[
+            { href: "https://www.facebook.com/?locale=ar_AR", label: "Facebook", Icon: FaFacebookF },
+            { href: "https://www.linkedin.com/login/ar",       label: "LinkedIn",  Icon: FaLinkedinIn },
+            { href: "https://x.com/?lang=ar",                  label: "X",         Icon: FaTwitter },
+            { href: "https://www.snapchat.com/",               label: "Snapchat",  Icon: FaSnapchatGhost },
+            { href: "https://www.tiktok.com/login",            label: "TikTok",    Icon: FaTiktok },
+            { href: "https://www.instagram.com/",              label: "Instagram", Icon: FaInstagram },
+            { href: "https://www.youtube.com/",                label: "YouTube",   Icon: FaYoutube },
+          ].map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              aria-label={label}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...styles.icon, cursor: 'pointer', transition: 'color 0.2s ease, opacity 0.2s ease' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#0284c7'; e.currentTarget.style.opacity = '0.85'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#003366'; e.currentTarget.style.opacity = '1'; }}
+            >
+              <Icon />
+            </a>
+          ))}
         </div>
 
         {/* Section 2: Legal Links (Translated Text) */}
@@ -105,55 +120,6 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
-// Simple Styles
-const styles = {
-  footerContainer: {
-    backgroundColor: '#f5f5f5', // Light grey background from your image
-    padding: '20px 40px',
-    borderTop: '1px solid #e0e0e0',
-    fontFamily: 'Arial, sans-serif',
-    direction: 'rtl', // Right-to-Left for Arabic content
-  },
-  contentWrapper: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    flexWrap: 'wrap',
-    gap: '20px'
-  },
-  socialIcons: {
-    display: 'flex',
-    gap: '15px',
-    fontSize: '18px',
-    color: '#003366', // Deep blue/navy from the icons
-    order: 1,
-  },
-  legalLinks: {
-    display: 'flex',
-    gap: '8px',
-    fontSize: '14px',
-    color: '#666',
-    order: 2,
-  },
-  copyright: {
-    fontSize: '14px',
-    color: '#666',
-    order: 3,
-  },
-  link: {
-    textDecoration: 'none',
-    color: 'inherit',
-  },
-  icon: {
-    color: 'inherit',
-    textDecoration: 'none',
-  },
-  divider: {
-    margin: '0 5px'
-  }
 };
 
 export default Footer;

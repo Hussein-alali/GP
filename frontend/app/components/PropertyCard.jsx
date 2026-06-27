@@ -164,6 +164,8 @@ const PropertyCard = ({
         ...(isList ? cardList : null),
         ...(isCarousel ? cardCarousel : null),
       }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 18px 36px rgba(0,0,0,0.13)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
     >
       <div
         style={{
@@ -273,6 +275,7 @@ const card = {
   border: "1px solid #e5e7eb",
   cursor: "pointer",
   boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
+  transition: "box-shadow 0.2s ease, transform 0.2s ease",
 };
 
 const media = {

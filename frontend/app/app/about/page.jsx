@@ -76,15 +76,28 @@ const AboutPage = () => {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
           
           {/* Vision Card */}
-          <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '15px' }}>🔭</div>
+          <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', transition: 'box-shadow 0.2s ease, transform 0.2s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,77,122,0.15)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+            <div style={{ marginBottom: '15px' }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#004d7a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            </div>
             <h3 style={{ color: '#004d7a', marginBottom: '15px' }}>{t.aboutPage.visionTitle}</h3>
             <p style={{ color: '#666', lineHeight: '1.6' }}>{t.aboutPage.visionText}</p>
           </div>
 
           {/* Mission Card */}
-          <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '15px' }}>🎯</div>
+          <div style={{ backgroundColor: '#fff', padding: '40px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', transition: 'box-shadow 0.2s ease, transform 0.2s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,77,122,0.15)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+            <div style={{ marginBottom: '15px' }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#004d7a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+              </svg>
+            </div>
             <h3 style={{ color: '#004d7a', marginBottom: '15px' }}>{t.aboutPage.missionTitle}</h3>
             <p style={{ color: '#666', lineHeight: '1.6' }}>{t.aboutPage.missionText}</p>
           </div>
@@ -101,13 +114,16 @@ const AboutPage = () => {
           gap: '20px' 
         }}>
           {t.aboutPage.whyUsList.map((item, index) => (
-            <div key={index} style={{ 
-              padding: '20px', 
-              border: '1px solid #eee', 
+            <div key={index} style={{
+              padding: '20px',
+              border: '1px solid #e5edf6',
               borderRadius: '12px',
-              transition: 'transform 0.3s ease',
-              backgroundColor: '#fff'
-            }}>
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              backgroundColor: '#fff',
+              cursor: 'default',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,77,122,0.1)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
               <p style={{ fontWeight: '600', color: '#004d7a' }}>{item}</p>
             </div>
           ))}

@@ -140,7 +140,9 @@ const AddPropertyPage = () => {
     latitude: null, longitude: null,
   });
 
-  const [imageFiles, setImageFiles]     = useState([]);
+  // imageBlobs: compressed Blob[] for upload; apartment.images: dataURL[] for preview
+  const [imageBlobs, setImageBlobs]     = useState([]);
+  const fileInputRef                    = useRef(null);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal]      = useState(false);
   const [imageError, setImageError]     = useState('');
@@ -222,41 +224,54 @@ const AddPropertyPage = () => {
   }, [apartment.type, apartment.area, apartment.rooms, apartment.baths, apartment.location_en]);
 
   // ── Image handling ────────────────────────────────────────────────────────
-  const handleImagesChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setImageError('');
-    setBrandResult(null);
-
-    const newFiles = [...imageFiles, ...files].slice(0, 10);
-    setImageFiles(newFiles);
-
-    files.forEach((file) => {
+  const compressAndAdd = (file) =>
+    new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const img = new Image();
         img.src = reader.result;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 600;
-          const scale = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
-          canvas.height = img.height * scale;
+          const MAX_W = 1200;
+          const ratio = Math.min(1, MAX_W / img.width);
+          canvas.width  = Math.round(img.width  * ratio);
+          canvas.height = Math.round(img.height * ratio);
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          setApartment((prev) => ({
-            ...prev,
-            images: [...prev.images, canvas.toDataURL('image/jpeg', 0.6)].slice(0, 10),
-          }));
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          canvas.toBlob((blob) => resolve({ dataUrl, blob }), 'image/jpeg', 0.82);
         };
       };
       reader.readAsDataURL(file);
     });
 
-    // Brand domain check on first uploaded image
+  const handleImagesChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    // Reset so the same file can be re-selected next time
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (!files.length) return;
+
+    setImageError('');
+    setBrandResult(null);
+
+    const slots = 10 - apartment.images.length;
+    if (slots <= 0) {
+      setImageError(isRTL ? 'وصلت للحد الأقصى (10 صور).' : 'Maximum 10 images reached.');
+      return;
+    }
+
+    const toProcess = files.slice(0, slots);
+    const results = await Promise.all(toProcess.map(compressAndAdd));
+
+    setApartment((prev) => ({
+      ...prev,
+      images: [...prev.images, ...results.map((r) => r.dataUrl)].slice(0, 10),
+    }));
+    setImageBlobs((prev) => [...prev, ...results.map((r) => r.blob)].slice(0, 10));
+
+    // Brand check on the first image of this batch
     setBrandLoading(true);
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     const userEmail  = storedUser ? JSON.parse(storedUser)?.email ?? '' : '';
-
     brandAPI.checkOwner(files[0], userEmail)
       .then((result) => setBrandResult(result))
       .catch(() => setBrandResult(null))
@@ -264,15 +279,15 @@ const AddPropertyPage = () => {
   };
 
   const removeImage = (index) => {
-    setApartment((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-    setImageFiles((prev) => {
-      const next = prev.filter((_, i) => i !== index);
+    setApartment((prev) => {
+      const next = prev.images.filter((_, i) => i !== index);
       if (next.length === 0) {
         setImageError(isRTL ? 'يجب إضافة صورة واحدة على الأقل.' : 'At least one image is required.');
         setBrandResult(null);
       }
-      return next;
+      return { ...prev, images: next };
     });
+    setImageBlobs((prev) => prev.filter((_, i) => i !== index));
   };
 
   // ── Map ───────────────────────────────────────────────────────────────────
@@ -299,7 +314,7 @@ const AddPropertyPage = () => {
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (imageFiles.length === 0) {
+    if (imageBlobs.length === 0) {
       setImageError(isRTL ? 'يجب إضافة صورة واحدة على الأقل.' : 'At least one image is required.');
       return;
     }
@@ -325,7 +340,7 @@ const AddPropertyPage = () => {
       formData.append('features',    JSON.stringify(apartment.features));
       if (apartment.latitude)  formData.append('latitude',  String(apartment.latitude));
       if (apartment.longitude) formData.append('longitude', String(apartment.longitude));
-      imageFiles.forEach((file) => formData.append('files', file));
+      imageBlobs.forEach((blob, i) => formData.append('files', blob, `image_${i}.jpg`));
 
       await realEstateAPI.addProperty(formData);
       setShowSuccessModal(true);
@@ -494,20 +509,45 @@ const AddPropertyPage = () => {
           {/* 3. Photos */}
           <div style={formSection}>
             <h3 style={sectionTitle}>{isRTL ? '3. الصور (حتى 10)' : '3. Photos (Up to 10)'}</h3>
-            <label style={uploadBox}>
-              <input type="file" accept="image/*" multiple style={{ display: 'none' }}
-                onChange={handleImagesChange} required={imageFiles.length === 0} />
-              <div style={{ textAlign: 'center' }}>📷<br />{isRTL ? 'إضافة صور' : 'Add Photos'}</div>
-            </label>
-            {imageError && <p style={{ color: '#dc2626', marginTop: 10, fontWeight: 600 }}>{imageError}</p>}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 15, marginTop: 20 }}>
-              {apartment.images.map((img, index) => (
-                <div key={index} style={{ position: 'relative', height: 100, borderRadius: 10, overflow: 'hidden' }}>
-                  <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button type="button" onClick={() => removeImage(index)} style={removeBadge}>×</button>
+
+            <label style={{ ...uploadBox, opacity: apartment.images.length >= 10 ? 0.5 : 1, cursor: apartment.images.length >= 10 ? 'not-allowed' : 'pointer' }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handleImagesChange}
+                disabled={apartment.images.length >= 10}
+              />
+              <div style={{ textAlign: 'center', color: '#64748b' }}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>📷</div>
+                <div style={{ fontWeight: 700 }}>{isRTL ? 'اضغط لإضافة صور' : 'Click to add photos'}</div>
+                <div style={{ fontSize: '0.82rem', marginTop: 4 }}>
+                  {isRTL
+                    ? `${apartment.images.length}/10 — يمكنك الضغط عدة مرات لإضافة المزيد`
+                    : `${apartment.images.length}/10 — click multiple times to add more`}
                 </div>
-              ))}
-            </div>
+              </div>
+            </label>
+
+            {imageError && <p style={{ color: '#dc2626', marginTop: 10, fontWeight: 600 }}>{imageError}</p>}
+
+            {apartment.images.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 12, marginTop: 16 }}>
+                {apartment.images.map((img, index) => (
+                  <div key={index} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', aspectRatio: '4/3', border: index === 0 ? '2.5px solid #008ccf' : '1.5px solid #e2e8f0' }}>
+                    <img src={img} alt={`preview-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    {index === 0 && (
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,140,207,0.85)', color: '#fff', fontSize: '0.7rem', fontWeight: 700, textAlign: 'center', padding: '3px 0' }}>
+                        {isRTL ? 'الصورة الرئيسية' : 'Main Photo'}
+                      </div>
+                    )}
+                    <button type="button" onClick={() => removeImage(index)} style={removeBadge}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 4. Brand Protection */}
@@ -526,7 +566,7 @@ const AddPropertyPage = () => {
               </div>
             )}
 
-            {!brandLoading && imageFiles.length === 0 && (
+            {!brandLoading && imageBlobs.length === 0 && (
               <div style={{ padding: '14px 18px', background: '#f8fafc', border: '1.5px dashed #cbd5e1', borderRadius: 10, color: '#94a3b8', fontSize: '0.9rem' }}>
                 {isRTL ? 'أضف صورة أعلاه لبدء الفحص تلقائيًا.' : 'Upload an image above to trigger automatic scanning.'}
               </div>

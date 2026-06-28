@@ -80,23 +80,23 @@ const Navbar = () => {
   };
 
   const modernTriggerBase = (isOpen) => ({
-    height: "42px",
-    borderRadius: "14px",
-    border: isOpen ? "1px solid rgba(14, 165, 233, 0.55)" : "1px solid rgba(148, 163, 184, 0.45)",
-    background: isOpen ? "rgba(236, 253, 255, 0.88)" : "rgba(156, 159, 180, 0.92)",
-    boxShadow: isOpen ? "0 10px 24px rgba(14, 165, 233, 0.16)" : "0 6px 18px rgba(15, 23, 42, 0.09)",
-    transition: "all 0.2s ease",
-    backdropFilter: "blur(8px)",
+    height: "40px",
+    borderRadius: "999px",
+    border: isOpen ? "1.5px solid #0b79c7" : "1.5px solid #e2e8f0",
+    background: isOpen ? "#eff8ff" : "#fff",
+    boxShadow: isOpen ? "0 2px 12px rgba(11,121,199,0.14)" : "0 1px 6px rgba(15,23,42,0.07)",
+    transition: "all 0.18s ease",
+    backdropFilter: "none",
   });
 
   const avatarOrb = {
-    width: "26px",
-    height: "26px",
-    borderRadius: "10px",
+    width: "24px",
+    height: "24px",
+    borderRadius: "999px",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
+    background: "#0f172a",
     color: "#f8fafc",
     position: "relative",
     flex: "0 0 auto",
@@ -114,12 +114,12 @@ const Navbar = () => {
   };
 
   const langCodeText = {
-    fontWeight: 800,
-    fontSize: "0.76rem",
-    letterSpacing: "0.04em",
+    fontWeight: 700,
+    fontSize: "0.78rem",
+    letterSpacing: "0.03em",
     color: "#0f172a",
     lineHeight: 1,
-    minWidth: "26px",
+    minWidth: "24px",
     textAlign: "center",
   };
 

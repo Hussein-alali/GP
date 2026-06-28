@@ -29,6 +29,7 @@ const ProfilePage = () => {
         profileUpdated: "تم حفظ البيانات.",
         profileSaveFailed: "فشل حفظ البيانات.",
         myListings: "عقاراتي المنشورة",
+        editListing: "تعديل",
         removeListing: "حذف الإعلان",
         deleting: "جارٍ الحذف...",
         confirmDeleteTitle: "تأكيد الحذف",
@@ -55,6 +56,7 @@ const ProfilePage = () => {
         profileUpdated: "Profile updated.",
         profileSaveFailed: "Failed to save.",
         myListings: "My Listings",
+        editListing: "Edit",
         removeListing: "Remove Listing",
         deleting: "Deleting...",
         confirmDeleteTitle: "Confirm Deletion",
@@ -429,23 +431,42 @@ const ProfilePage = () => {
                     isFavorite={user.favorites.includes(Number(prop.id))}
                     onToggleFavorite={handleToggleFavorite}
                   />
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteMyProperty(prop.id)}
-                    disabled={deletingPropertyId === prop.id}
-                    style={{
-                      border: "1px solid #ef4444",
-                      color: "#ef4444",
-                      background: "#fff",
-                      borderRadius: "10px",
-                      padding: "8px 12px",
-                      fontWeight: 700,
-                      cursor: deletingPropertyId === prop.id ? "not-allowed" : "pointer",
-                      opacity: deletingPropertyId === prop.id ? 0.7 : 1,
-                    }}
-                  >
-                    {deletingPropertyId === prop.id ? t.deleting : t.removeListing}
-                  </button>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/profile/edit-property/${prop.id}`)}
+                      style={{
+                        flex: 1,
+                        border: "1px solid #008ccf",
+                        color: "#008ccf",
+                        background: "#fff",
+                        borderRadius: "10px",
+                        padding: "8px 12px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {t.editListing}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMyProperty(prop.id)}
+                      disabled={deletingPropertyId === prop.id}
+                      style={{
+                        flex: 1,
+                        border: "1px solid #ef4444",
+                        color: "#ef4444",
+                        background: "#fff",
+                        borderRadius: "10px",
+                        padding: "8px 12px",
+                        fontWeight: 700,
+                        cursor: deletingPropertyId === prop.id ? "not-allowed" : "pointer",
+                        opacity: deletingPropertyId === prop.id ? 0.7 : 1,
+                      }}
+                    >
+                      {deletingPropertyId === prop.id ? t.deleting : t.removeListing}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

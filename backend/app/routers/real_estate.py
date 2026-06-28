@@ -92,6 +92,7 @@ def get_property(property_id: int, db: Session = Depends(get_db)):
 @router.put("/{property_id}", response_model=UserAddRealEstateResponse)
 async def update_property(
     property_id: int,
+    owner_id: int = Form(...),
     area: Optional[float] = Form(None),
     bedrooms: Optional[int] = Form(None),
     bathrooms: Optional[int] = Form(None),
@@ -107,6 +108,8 @@ async def update_property(
     prop = db.query(RealEstate).filter(RealEstate.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
+    if prop.owner_id != owner_id:
+        raise HTTPException(status_code=403, detail="You are not the owner of this property")
 
     for field, val in dict(area=area, bedrooms=bedrooms, bathrooms=bathrooms,
                            location=location, type=type, price=price,

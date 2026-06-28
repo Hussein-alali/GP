@@ -1749,17 +1749,32 @@ html[dir="rtl"] .floating-chat-icon {
 
 .market-icon-btn,
 .lang-btn {
-  border: 1px solid #e5e7eb;
+  border: 1.5px solid #e2e8f0;
   background: #fff;
-  color: #111827;
+  color: #0f172a;
   cursor: pointer;
   font-weight: 700;
   border-radius: 999px;
-  height: 38px;
-  padding: 0 12px;
+  height: 40px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: 0 1px 6px rgba(15,23,42,0.07);
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.market-icon-btn:hover,
+.lang-btn:hover {
+  border-color: #0b79c7;
+  box-shadow: 0 2px 12px rgba(11,121,199,0.13);
+  background: #eff8ff;
+}
+
+.profile-trigger:hover {
+  border-color: #0b79c7 !important;
+  box-shadow: 0 2px 12px rgba(11,121,199,0.13) !important;
+  background: #eff8ff !important;
 }
 
 .lang-menu-wrap {
@@ -1960,10 +1975,12 @@ html[dir="ltr"] .profile-menu-panel {
 }
 
 .profile-trigger {
-  border: 1px solid #111827;
-  min-width: 78px;
-  height: 44px;
-  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  min-width: 84px;
+  height: 40px;
+  border-radius: 999px;
+  padding: 0 14px;
+  gap: 8px;
 }
 
 .profile-caret {
@@ -1975,17 +1992,32 @@ html[dir="ltr"] .profile-menu-panel {
 }
 
 .lang-btn {
-  border: 1px solid #111827;
-  border-radius: 10px;
-  min-width: 78px;
-  height: 44px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  min-width: 84px;
+  height: 40px;
   justify-content: center;
   padding: 0 14px;
-  gap: 6px;
-  font-size: 1.05rem;
-  font-weight: 800;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
   background: #fff;
   color: #0f172a;
+}
+
+/* Hide nav buttons and lower navbar z-index when More Filters panel is open */
+html[data-filters-open="true"] .market-nav-left {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+html .market-nav-left {
+  transition: opacity 0.2s ease;
+}
+
+html[data-filters-open="true"] .market-nav {
+  z-index: 1100 !important;
 }
 
 .lang-caret {

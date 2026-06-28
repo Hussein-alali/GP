@@ -357,6 +357,11 @@ const PropertiesContent = () => {
   }, [filters, showSidebarFilters]);
 
   useEffect(() => {
+    document.documentElement.setAttribute("data-filters-open", showSidebarFilters ? "true" : "false");
+    return () => document.documentElement.removeAttribute("data-filters-open");
+  }, [showSidebarFilters]);
+
+  useEffect(() => {
     const handleOutside = (event) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
         setIsSortOpen(false);
@@ -511,6 +516,7 @@ const PropertiesContent = () => {
     if (!sidebarFilters) return;
     setFilters(sidebarFilters);
     updateURL(sidebarFilters);
+    setShowSidebarFilters(false);
   };
 
   if (loading) {
@@ -786,7 +792,7 @@ const PropertiesContent = () => {
                       const next = Math.min(Number(e.target.value), priceMaxValue - 5000);
                       handleSidebarFilterChange("minPrice", String(next));
                     }}
-                    style={rangeInputOverlay}
+                    style={{ ...rangeInputOverlay, zIndex: priceMinValue > priceMaxValue - 100000 ? 2 : 1 }}
                   />
                   <input
                     className="dual-range-input"
@@ -799,7 +805,7 @@ const PropertiesContent = () => {
                       const next = Math.max(Number(e.target.value), priceMinValue + 5000);
                       handleSidebarFilterChange("maxPrice", String(next));
                     }}
-                    style={rangeInputOverlay}
+                    style={{ ...rangeInputOverlay, zIndex: priceMinValue > priceMaxValue - 100000 ? 1 : 2 }}
                   />
                 </div>
               </div>
@@ -842,7 +848,7 @@ const PropertiesContent = () => {
                       const next = Math.min(Number(e.target.value), areaMaxValue - 10);
                       handleSidebarFilterChange("minArea", String(next));
                     }}
-                    style={rangeInputOverlay}
+                    style={{ ...rangeInputOverlay, zIndex: areaMinValue > areaMaxValue - 500 ? 2 : 1 }}
                   />
                   <input
                     className="dual-range-input"
@@ -855,7 +861,7 @@ const PropertiesContent = () => {
                       const next = Math.max(Number(e.target.value), areaMinValue + 10);
                       handleSidebarFilterChange("maxArea", String(next));
                     }}
-                    style={rangeInputOverlay}
+                    style={{ ...rangeInputOverlay, zIndex: areaMinValue > areaMaxValue - 500 ? 1 : 2 }}
                   />
                 </div>
               </div>
@@ -1069,7 +1075,7 @@ const sliderWrap = { display: "grid", alignItems: "center", gap: "10px" };
 const rangeTrackWrap = { position: "relative", height: "20px", display: "grid", alignItems: "center", direction: "rtl" };
 const rangeBaseLine = { position: "absolute", left: 0, right: 0, top: "50%", height: "4px", transform: "translateY(-50%)", background: "#cbd5e1", borderRadius: "999px" };
 const rangeFillLine = { position: "absolute", top: "50%", height: "4px", transform: "translateY(-50%)", background: "#1d8ace", borderRadius: "999px" };
-const rangeInputOverlay = { position: "absolute", inset: 0, width: "100%", height: "20px", margin: 0, background: "transparent", pointerEvents: "none", accentColor: "#1d8ace", direction: "ltr" };
+const rangeInputOverlay = { position: "absolute", inset: 0, width: "100%", height: "20px", margin: 0, background: "transparent", pointerEvents: "auto", accentColor: "#1d8ace", direction: "ltr", cursor: "pointer" };
 const rangeScaleRow = { display: "flex", justifyContent: "space-between", color: "#0f172a", fontSize: "0.95rem" };
 const rangeDivider = { height: "1px", background: "#e5e7eb", margin: "16px 0" };
 const searchBtn = { width: "100%", boxSizing: "border-box", marginTop: "12px", border: "none", borderRadius: "10px", background: "#0b79c7", padding: "11px", color: "#fff", cursor: "pointer", fontWeight: 800 };

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Service *)",
+      "PowerShell(sc.exe query \"postgresql-x64-18\")",
+      "PowerShell(sc.exe start \"postgresql-x64-18\")",
+      "Bash(/c/Program Files/PostgreSQL/18/bin/pg_isready.exe *)",
+      "Bash(python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(npm run *)",
+      "Bash(echo \"Frontend PID: $!\")",
+      "Bash(xargs grep *)",
+      "Bash(curl -s \"http://127.0.0.1:8003/api/real_estate/?limit=1\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=d[0] if d else {}; print\\('images:', type\\(p.get\\('images'\\)\\), len\\(p.get\\('images',[]\\)\\), 'first_img_len:', len\\(p['images'][0]\\) if p.get\\('images'\\) else 0\\)\")",
+      "Bash(curl *)",
+      "Bash(python3 -c ' *)",
+      "Bash(python seed_images.py)"
+    ]
+  }
+}

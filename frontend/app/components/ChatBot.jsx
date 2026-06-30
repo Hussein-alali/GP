@@ -2,6 +2,42 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 
+function renderMessageText(text, isUserMessage) {
+  const parts = String(text || "").split(/(https?:\/\/[^\s]+)/g);
+
+  return parts.map((part, index) => {
+    if (!/^https?:\/\//i.test(part)) return part;
+
+    return (
+      <a
+        key={`${part}-${index}`}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          color: isUserMessage ? "#fff" : "#005f99",
+          fontWeight: 700,
+          textDecoration: "underline",
+          overflowWrap: "anywhere",
+        }}
+      >
+        {part}
+      </a>
+    );
+  });
+}
+
+function getStoredUser() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
+}
+
 export default function ChatBot() {
   const { language } = useLanguage();
   const isRTL = language === "ar";
@@ -33,7 +69,7 @@ export default function ChatBot() {
 
     try {
       const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
-      const storedUser = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "null") : null;
+      const storedUser = getStoredUser();
       const userId = Number(storedUser?.id || 0) || null;
 
       const history = messages.slice(1).map((m) => ({
@@ -53,7 +89,12 @@ export default function ChatBot() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { sender: "ai", text: res.ok ? data.text : (isRTL ? "تعذر الاتصال." : "Failed to connect.") },
+        {
+          sender: "ai",
+          text: res.ok
+            ? data.text
+            : data.error || (isRTL ? "تعذر الاتصال." : "Failed to connect."),
+        },
       ]);
     } catch {
       setMessages((prev) => [
@@ -144,7 +185,7 @@ export default function ChatBot() {
                   color: m.sender === "user" ? "#fff" : "#1a1a2e",
                 }}
               >
-                {m.text}
+                {renderMessageText(m.text, m.sender === "user")}
               </div>
             ))}
             {loading && (
